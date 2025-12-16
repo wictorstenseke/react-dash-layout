@@ -5,7 +5,9 @@ import {
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
+
 import { auth } from "@/lib/firebase";
+
 import type { AuthResult, AuthCallback, AuthError } from "./types";
 
 /**
@@ -24,13 +26,16 @@ function mapAuthError(error: unknown): AuthError {
     "auth/user-not-found": "No account found with this email",
     "auth/wrong-password": "Incorrect password",
     "auth/invalid-credential": "Invalid email or password",
-    "auth/too-many-requests": "Too many failed attempts. Please try again later",
-    "auth/network-request-failed": "Network error. Please check your connection",
+    "auth/too-many-requests":
+      "Too many failed attempts. Please try again later",
+    "auth/network-request-failed":
+      "Network error. Please check your connection",
   };
 
   return {
     code,
-    message: errorMessages[code] || firebaseError.message || "An error occurred",
+    message:
+      errorMessages[code] || firebaseError.message || "An error occurred",
   };
 }
 
@@ -122,8 +127,6 @@ export async function signOutUser(): Promise<AuthResult> {
  * Subscribe to auth state changes
  * Returns an unsubscribe function to stop listening
  */
-export function onAuthStateChangedListener(
-  callback: AuthCallback
-): () => void {
+export function onAuthStateChangedListener(callback: AuthCallback): () => void {
   return onAuthStateChanged(auth, callback);
 }

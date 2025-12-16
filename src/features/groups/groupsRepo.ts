@@ -9,7 +9,9 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
+
 import { db } from "@/lib/firebase";
+
 import type { Group, CreateGroupInput, UpdateGroupInput } from "./types";
 
 /**
@@ -35,11 +37,13 @@ export async function createGroup(
     });
 
     // Return the created group with generated ID
+    // Note: createdAt/updatedAt are approximate, will be corrected on next read
+    const now = new Date();
     return {
       id: docRef.id,
       ...data,
-      createdAt: new Date() as any, // Approximate, will be corrected on next read
-      updatedAt: new Date() as any,
+      createdAt: now,
+      updatedAt: now,
     };
   } catch (error) {
     console.error("Error creating group:", error);
