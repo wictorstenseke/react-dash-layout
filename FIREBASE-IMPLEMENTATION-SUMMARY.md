@@ -2,7 +2,7 @@
 
 **Date:** December 16, 2025
 **Project:** react-dash-layout (kst workspace)
-**Firebase Project:** spotdash-dbaf2
+**Firebase Project:** [PROJECT_ID]
 
 ## ✅ Implementation Complete
 
@@ -16,9 +16,9 @@ All Firebase Authentication and Firestore features have been successfully implem
 
 **Actions Completed:**
 
-- ✅ Set active Firebase project to `spotdash-dbaf2`
+- ✅ Set active Firebase project to `[PROJECT_ID]`
 - ✅ Created Web App: "SpotDash Web App"
-  - App ID: `1:21180593862:web:0985dcab951792fbfe49c7`
+  - App ID: `[APP_ID]`
 - ✅ Initialized Firestore in `europe-west1` region
 - ✅ Created `firebase.json` configuration
 - ✅ Retrieved SDK configuration values
@@ -26,7 +26,7 @@ All Firebase Authentication and Firestore features have been successfully implem
 **MCP Commands Used:**
 
 ```bash
-firebase_update_environment(project_dir, active_project: spotdash-dbaf2)
+firebase_update_environment(project_dir, active_project: [PROJECT_ID])
 firebase_create_app(platform: web, display_name: SpotDash Web App)
 firebase_init(features: {firestore: {location_id: europe-west1}})
 firebase_get_sdk_config(app_id: ...)
@@ -208,12 +208,12 @@ cp .env.local.example .env.local
 **Required values (from Firebase Console or MCP output):**
 
 ```env
-VITE_FIREBASE_API_KEY=AIzaSyDOHT1cIZfODBG9fnm7YQ9iV6wYv3fI4ZM
-VITE_FIREBASE_AUTH_DOMAIN=spotdash-dbaf2.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=spotdash-dbaf2
-VITE_FIREBASE_STORAGE_BUCKET=spotdash-dbaf2.firebasestorage.app
-VITE_FIREBASE_MESSAGING_SENDER_ID=21180593862
-VITE_FIREBASE_APP_ID=1:21180593862:web:0985dcab951792fbfe49c7
+VITE_FIREBASE_API_KEY=your_api_key_here
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
 ```
 
 **Security:**
