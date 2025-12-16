@@ -25,14 +25,6 @@ export function Landing() {
           </Button>
           <Button
             size="lg"
-            variant="secondary"
-            render={<Link to="/query-demo" />}
-            nativeButton={false}
-          >
-            Query Demo
-          </Button>
-          <Button
-            size="lg"
             variant="outline"
             render={
               <a

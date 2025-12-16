@@ -30,13 +30,11 @@ src/
 │   └── ui/                    # shadcn/ui components
 ├── pages/
 │   ├── Landing.tsx            # Home page
-│   ├── Example.tsx            # Example page
-│   └── QueryDemo.tsx          # TanStack Query demo
+│   └── Example.tsx            # Example page
 ├── routes/                    # TanStack Router routes
 │   ├── __root.tsx             # Root layout
 │   ├── index.tsx              # / route
-│   ├── example.tsx            # /example route
-│   └── query-demo.tsx         # /query-demo route
+│   └── example.tsx            # /example route
 ├── hooks/
 │   └── usePosts.ts            # Example query hooks
 ├── lib/
@@ -215,8 +213,6 @@ React Query Devtools are included in development mode. Click the floating icon t
 - View query states
 - Manually trigger refetches
 - Debug query configurations
-
-Visit `/query-demo` to see a complete working example with queries, mutations, and cache management.
 
 ## 🎯 Layout System
 

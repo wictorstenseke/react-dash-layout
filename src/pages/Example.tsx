@@ -1,172 +1,245 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import {
+  DragDropHorizontalIcon,
+  SquareArrowDiagonal02Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import ReactGridLayout, {
+  useContainerWidth,
+  type Layout,
+  verticalCompactor,
+} from "react-grid-layout";
 
-import { Button } from "@/components/ui/button";
+import { SortableSquares } from "@/components/SortableSquares";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-const COUNTER_STORAGE_KEY = "example-page-shared-counter";
-const COUNTER_QUERY_KEY = ["shared-counter"] as const;
-const BROADCAST_CHANNEL_NAME = "shared-counter-channel";
+const STORAGE_KEY = "grid-layout";
+const GRID_COLS = 48;
 
-const getCounterFromStorage = (): number => {
-  const stored = localStorage.getItem(COUNTER_STORAGE_KEY);
-  if (stored === null) return 0;
-  const parsed = Number.parseInt(stored, 10);
-  return Number.isNaN(parsed) ? 0 : parsed;
+const defaultLayout: Layout = [
+  { i: "group1", x: 0, y: 0, w: 12, h: 10 },
+  { i: "group2", x: 12, y: 0, w: 10, h: 10 },
+  { i: "group3", x: 22, y: 0, w: 14, h: 10 },
+  { i: "group4", x: 0, y: 10, w: 18, h: 10 },
+  { i: "group5", x: 18, y: 10, w: 18, h: 10 },
+];
+
+const loadLayout = (): Layout => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : defaultLayout;
+  } catch {
+    return defaultLayout;
+  }
 };
 
-const setCounterToStorage = async (value: number): Promise<number> => {
-  localStorage.setItem(COUNTER_STORAGE_KEY, String(value));
-  return value;
+const saveLayout = (layout: Layout) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
+  } catch (error) {
+    console.error("Failed to save layout:", error);
+  }
 };
+
+const colors = [
+  "bg-blue-500",
+  "bg-green-500",
+  "bg-yellow-500",
+  "bg-red-500",
+  "bg-purple-500",
+  "bg-pink-500",
+  "bg-indigo-500",
+  "bg-orange-500",
+  "bg-teal-500",
+  "bg-cyan-500",
+];
+
+const groupData = [
+  {
+    id: "group1",
+    title: "Warm Up",
+    description: "Pre-match preparation",
+    color: "bg-blue-100 dark:bg-blue-900/30",
+    borderColor: "border-blue-300 dark:border-blue-700",
+    defaultSquares: Array.from({ length: 8 }, (_, i) => ({
+      id: `group1-${i}`,
+      label: `${i + 1}`,
+      color: colors[i % colors.length],
+    })),
+  },
+  {
+    id: "group2",
+    title: "Goal",
+    description: "Score tracking",
+    color: "bg-green-100 dark:bg-green-900/30",
+    borderColor: "border-green-300 dark:border-green-700",
+    defaultSquares: Array.from({ length: 6 }, (_, i) => ({
+      id: `group2-${i}`,
+      label: `${i + 1}`,
+      color: colors[i % colors.length],
+    })),
+  },
+  {
+    id: "group3",
+    title: "Penalty",
+    description: "Penalty kicks",
+    color: "bg-purple-100 dark:bg-purple-900/30",
+    borderColor: "border-purple-300 dark:border-purple-700",
+    defaultSquares: Array.from({ length: 10 }, (_, i) => ({
+      id: `group3-${i}`,
+      label: `${i + 1}`,
+      color: colors[i % colors.length],
+    })),
+  },
+  {
+    id: "group4",
+    title: "Expulsion",
+    description: "Player expulsions",
+    color: "bg-orange-100 dark:bg-orange-900/30",
+    borderColor: "border-orange-300 dark:border-orange-700",
+    defaultSquares: Array.from({ length: 12 }, (_, i) => ({
+      id: `group4-${i}`,
+      label: `${i + 1}`,
+      color: colors[i % colors.length],
+    })),
+  },
+  {
+    id: "group5",
+    title: "Lounge",
+    description: "Post-match area",
+    color: "bg-pink-100 dark:bg-pink-900/30",
+    borderColor: "border-pink-300 dark:border-pink-700",
+    defaultSquares: Array.from({ length: 7 }, (_, i) => ({
+      id: `group5-${i}`,
+      label: `${i + 1}`,
+      color: colors[i % colors.length],
+    })),
+  },
+];
 
 export function Example() {
-  const queryClient = useQueryClient();
+  const { width, containerRef, mounted } = useContainerWidth();
+  const [layout, setLayout] = useState<Layout>(loadLayout);
+  const [isSquareDragging, setIsSquareDragging] = useState(false);
 
-  const { data: count = 0 } = useQuery({
-    queryKey: COUNTER_QUERY_KEY,
-    queryFn: getCounterFromStorage,
-    staleTime: Infinity,
-  });
+  const handleLayoutChange = (newLayout: Layout) => {
+    setLayout(newLayout);
+  };
 
-  const counterMutation = useMutation({
-    mutationFn: setCounterToStorage,
-    onSuccess: (newValue) => {
-      queryClient.setQueryData(COUNTER_QUERY_KEY, newValue);
-      const channel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
-      channel.postMessage({ type: "counter-update", value: newValue });
-      channel.close();
-    },
-  });
+  const handleResetLayout = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setLayout(defaultLayout);
+  };
+
+  const handleBringToTop = () => {
+    setLayout((currentLayout) =>
+      verticalCompactor.compact(currentLayout, GRID_COLS)
+    );
+  };
 
   useEffect(() => {
-    const channel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+    saveLayout(layout);
+  }, [layout]);
 
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === "counter-update") {
-        queryClient.setQueryData(COUNTER_QUERY_KEY, event.data.value);
-      }
-    };
-
-    channel.addEventListener("message", handleMessage);
-
-    return () => {
-      channel.removeEventListener("message", handleMessage);
-      channel.close();
-    };
-  }, [queryClient]);
-
-  const handleIncrement = () => {
-    counterMutation.mutate(count + 1);
+  const handleSquareDragStart = () => {
+    setIsSquareDragging(true);
   };
 
-  const handleDecrement = () => {
-    counterMutation.mutate(count - 1);
-  };
-
-  const handleReset = () => {
-    counterMutation.mutate(0);
+  const handleSquareDragEnd = () => {
+    setIsSquareDragging(false);
   };
 
   return (
     <div className="flex flex-col space-y-8 py-8">
       {/* Page Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Example Page</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Grid Layout Example
+          </h1>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleBringToTop}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors underline"
+            >
+              Bring to top
+            </button>
+            <button
+              onClick={handleResetLayout}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors underline"
+            >
+              Reset layout
+            </button>
+          </div>
+        </div>
         <p className="text-muted-foreground">
-          This is an example page showing how components and layouts work
-          together.
+          Drag and resize the 5 match scenario groups below. Each group contains
+          sortable squares that can be reordered by dragging. Groups can be
+          resized to any size and positioned on a 48-column grid.
         </p>
       </div>
 
-      {/* Content Sections */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Counter Card */}
-        <div className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm flex flex-col justify-center">
-          <h2 className="mb-4 text-xl font-semibold text-center">
-            Interactive Counter
-          </h2>
-          <div className="flex flex-col items-center space-y-4">
-            <p className="text-4xl font-bold">{count}</p>
-            <div className="flex flex-wrap gap-2 justify-center">
-              <Button
-                className="min-w-10"
-                onClick={handleDecrement}
-                variant="outline"
+      {/* Grid Layout Container */}
+      <div ref={containerRef} className="w-full">
+        {mounted && (
+          <ReactGridLayout
+            layout={layout}
+            onLayoutChange={handleLayoutChange}
+            width={width}
+            gridConfig={{
+              cols: GRID_COLS,
+              rowHeight: 16,
+              margin: [12, 12],
+              containerPadding: [16, 16],
+            }}
+            dragConfig={{
+              enabled: !isSquareDragging,
+              threshold: 3,
+              handle: ".drag-handle",
+            }}
+            resizeConfig={{
+              enabled: true,
+              handles: ["s", "w", "e", "n", "sw", "nw", "se", "ne"],
+            }}
+          >
+            {groupData.map((group) => (
+              <div
+                key={group.id}
+                className={`group rounded-lg border-2 ${group.borderColor} ${group.color} px-4 shadow-sm h-full flex flex-col relative`}
               >
-                –
-              </Button>
-              <Button onClick={handleReset} variant="secondary">
-                Reset
-              </Button>
-              <Button className="min-w-10" onClick={handleIncrement}>
-                +
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Button Variants Card */}
-        <div className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
-          <div className="flex flex-col gap-6 sm:flex-row sm:gap-8">
-            <div className="flex-1 min-w-0">
-              <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-                Default Buttons
-              </h3>
-              <div className="flex flex-col space-y-2">
-                <Button>Default Button</Button>
-                <Button variant="secondary">Secondary</Button>
-                <Button variant="outline">Outline</Button>
-                <Button variant="ghost">Ghost</Button>
-                <Button variant="destructive">Destructive</Button>
-                <Button variant="link">Link</Button>
+                <div className="flex flex-col h-full">
+                  <div className="mb-0 flex items-center justify-between py-4 drag-handle cursor-move shrink-0">
+                    <h3 className="text-lg font-semibold">{group.title}</h3>
+                    <div className="p-1.5 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
+                      <HugeiconsIcon
+                        icon={DragDropHorizontalIcon}
+                        className="w-5 h-5 text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-h-0">
+                    <ScrollArea className="h-full">
+                      <SortableSquares
+                        groupId={group.id}
+                        initialSquares={group.defaultSquares}
+                        onDragStart={handleSquareDragStart}
+                        onDragEnd={handleSquareDragEnd}
+                      />
+                    </ScrollArea>
+                  </div>
+                </div>
+                {/* Custom resize icon overlay */}
+                <div className="absolute bottom-2 right-2 pointer-events-none">
+                  <HugeiconsIcon
+                    icon={SquareArrowDiagonal02Icon}
+                    className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors"
+                  />
+                </div>
               </div>
-            </div>
-
-            <div className="flex-1 min-w-0">
-              <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-                Small Variants
-              </h3>
-              <div className="flex flex-col space-y-2">
-                <Button size="sm">Default Button</Button>
-                <Button size="sm" variant="secondary">
-                  Secondary
-                </Button>
-                <Button size="sm" variant="outline">
-                  Outline
-                </Button>
-                <Button size="sm" variant="ghost">
-                  Ghost
-                </Button>
-                <Button size="sm" variant="destructive">
-                  Destructive
-                </Button>
-                <Button size="sm" variant="link">
-                  Link
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Additional Content */}
-      <div className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
-        <h2 className="mb-4 text-xl font-semibold">Responsive Layout</h2>
-        <p className="text-muted-foreground">
-          This page uses a responsive grid layout that adapts to different
-          screen sizes. On mobile, cards stack vertically. On tablet and
-          desktop, they appear side by side. The AppShell provides consistent
-          padding and max-width container across all pages.
-        </p>
-      </div>
-
-      {/* Navigation */}
-      <div className="flex justify-center pt-4">
-        <Button variant="outline" render={<Link to="/" />} nativeButton={false}>
-          ← Back to Home
-        </Button>
+            ))}
+          </ReactGridLayout>
+        )}
       </div>
     </div>
   );
