@@ -10,21 +10,42 @@ let db: Firestore | null = null;
 function initializeFirebase() {
   if (firebaseApp) return { firebaseApp, auth: auth!, db: db! };
 
-  const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  };
+  const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+  const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN;
+  const storageBucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET;
+  const messagingSenderId = import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID;
+  const appId = import.meta.env.VITE_FIREBASE_APP_ID;
 
   // Validate required config
-  if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  if (!apiKey || !projectId) {
+    const missing = [];
+    if (!apiKey) missing.push("VITE_FIREBASE_API_KEY");
+    if (!projectId) missing.push("VITE_FIREBASE_PROJECT_ID");
+    
+    console.error("Firebase config check:", {
+      apiKey: apiKey ? "✓" : "✗",
+      projectId: projectId ? "✓" : "✗",
+      authDomain: authDomain ? "✓" : "✗",
+      storageBucket: storageBucket ? "✓" : "✗",
+      messagingSenderId: messagingSenderId ? "✓" : "✗",
+      appId: appId ? "✓" : "✗",
+    });
+    
     throw new Error(
-      "Firebase configuration is incomplete. Please check your .env.local file."
+      `Firebase configuration is incomplete. Missing: ${missing.join(", ")}. ` +
+      `Please check your .env.local file exists and restart the dev server (Vite only reads .env files on startup).`
     );
   }
+
+  const firebaseConfig = {
+    apiKey,
+    authDomain,
+    projectId,
+    storageBucket,
+    messagingSenderId,
+    appId,
+  };
 
   firebaseApp = initializeApp(firebaseConfig);
   auth = getAuth(firebaseApp);
