@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // Redirect 404s to index.html for client-side routing
+      const path = location.pathname + location.search + location.hash;
+      sessionStorage.setItem("redirect", path);
+      // Get the base path (e.g., /react-dash-layout/)
+      const segments = location.pathname.split("/").filter(Boolean);
+      const basePath = segments.length > 0 ? "/" + segments[0] + "/" : "/";
+      location.replace(location.origin + basePath);
+    </script>
+  </head>
+  <body></body>
+</html>
