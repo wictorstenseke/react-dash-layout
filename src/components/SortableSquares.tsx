@@ -79,7 +79,7 @@ const SortableSquare = ({ square }: { square: Square }) => {
       style={style}
       {...attributes}
       {...listeners}
-      className={`${square.color} w-12 h-12 rounded-md flex items-center justify-center text-white font-semibold cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow`}
+      className={`${square.color} w-18 h-18 rounded-md flex items-center justify-center text-white font-semibold cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow`}
     >
       {square.label}
     </div>
