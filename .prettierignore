@@ -1,0 +1,11 @@
+# Ignore build outputs
+dist
+build
+node_modules
+
+# Ignore generated files
+*.min.js
+*.min.css
+
+# Ignore SVG files (they shouldn't be formatted)
+*.svg
