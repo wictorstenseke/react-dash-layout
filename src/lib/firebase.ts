@@ -22,7 +22,7 @@ function initializeFirebase() {
     const missing = [];
     if (!apiKey) missing.push("VITE_FIREBASE_API_KEY");
     if (!projectId) missing.push("VITE_FIREBASE_PROJECT_ID");
-    
+
     console.error("Firebase config check:", {
       apiKey: apiKey ? "✓" : "✗",
       projectId: projectId ? "✓" : "✗",
@@ -31,10 +31,10 @@ function initializeFirebase() {
       messagingSenderId: messagingSenderId ? "✓" : "✗",
       appId: appId ? "✓" : "✗",
     });
-    
+
     throw new Error(
       `Firebase configuration is incomplete. Missing: ${missing.join(", ")}. ` +
-      `Please check your .env.local file exists and restart the dev server (Vite only reads .env files on startup).`
+        `Please check your .env.local file exists and restart the dev server (Vite only reads .env files on startup).`
     );
   }
 
@@ -54,7 +54,10 @@ function initializeFirebase() {
   return { firebaseApp, auth, db };
 }
 
-const { firebaseApp: app, auth: authInstance, db: dbInstance } =
-  initializeFirebase();
+const {
+  firebaseApp: app,
+  auth: authInstance,
+  db: dbInstance,
+} = initializeFirebase();
 
 export { app as firebaseApp, authInstance as auth, dbInstance as db };
