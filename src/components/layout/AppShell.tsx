@@ -33,14 +33,6 @@ export function AppShell({ children }: AppShellProps) {
               >
                 Example
               </Link>
-              <Link
-                to="/query-demo"
-                className="transition-colors hover:text-foreground/80"
-                activeProps={{ className: "text-foreground" }}
-                inactiveProps={{ className: "text-foreground/60" }}
-              >
-                Query Demo
-              </Link>
             </nav>
           </div>
         </div>
@@ -52,15 +44,6 @@ export function AppShell({ children }: AppShellProps) {
           {children}
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t py-6 md:py-8">
-        <div className="container mx-auto flex max-w-screen-2xl flex-col items-center justify-between gap-4 px-4 sm:px-6 md:flex-row lg:px-8">
-          <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-            Built with React, Vite, and shadcn/ui
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

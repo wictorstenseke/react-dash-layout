@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
+@import "react-grid-layout/css/styles.css";
+@import "react-resizable/css/styles.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -123,4 +125,14 @@
   body {
     @apply font-sans bg-background text-foreground;
   }
+}
+
+/* Hide all resize handle icons but keep handles functional */
+.react-resizable-handle::after {
+  display: none !important;
+}
+
+/* Make handles invisible but still functional */
+.react-resizable-handle {
+  opacity: 0 !important;
 }
