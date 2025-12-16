@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import { useAuth } from "@/features/auth/AuthProvider";
 import { listGroups } from "@/features/groups/groupsRepo";
 
@@ -12,10 +13,9 @@ export function DevAuthProbe() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Reset state when user becomes null (cleanup from previous effect)
     if (!user) {
       console.log("🔐 Auth state: No user signed in");
-      setGroupsCount(null);
-      setError(null);
       return;
     }
 
@@ -25,26 +25,39 @@ export function DevAuthProbe() {
       emailVerified: user.emailVerified,
     });
 
+    let cancelled = false;
+
     // Test Firestore read when user is authenticated
     async function testFirestoreRead() {
-      if (!user) return;
+      if (!user || cancelled) return;
 
       try {
         const groups = await listGroups(user.uid);
-        setGroupsCount(groups.length);
-        setError(null);
-        console.log("📦 Firestore test: Successfully read groups", {
-          count: groups.length,
-        });
+        if (!cancelled) {
+          setGroupsCount(groups.length);
+          setError(null);
+          console.log("📦 Firestore test: Successfully read groups", {
+            count: groups.length,
+          });
+        }
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Unknown error";
-        setError(errorMessage);
-        console.error("📦 Firestore test: Failed to read groups", err);
+        if (!cancelled) {
+          const errorMessage =
+            err instanceof Error ? err.message : "Unknown error";
+          setError(errorMessage);
+          console.error("📦 Firestore test: Failed to read groups", err);
+        }
       }
     }
 
     testFirestoreRead();
+
+    return () => {
+      cancelled = true;
+      // Reset state in cleanup when user changes or component unmounts
+      setGroupsCount(null);
+      setError(null);
+    };
   }, [user]);
 
   if (!import.meta.env.DEV) {
