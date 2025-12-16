@@ -1,7 +1,7 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 
-import { AppShell } from "@/components/layout/AppShell";
 import { DevAuthProbe } from "@/components/DevAuthProbe";
+import { AppShell } from "@/components/layout/AppShell";
 
 export const Route = createRootRoute({
   component: () => (
@@ -11,4 +11,3 @@ export const Route = createRootRoute({
     </AppShell>
   ),
 });
-

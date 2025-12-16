@@ -5,7 +5,9 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
+
 import { onAuthStateChangedListener } from "./authService";
+
 import type { User } from "./types";
 
 type AuthContextValue = {
