@@ -8,6 +8,7 @@ import {
   serverTimestamp,
   query,
   orderBy,
+  Timestamp,
 } from "firebase/firestore";
 
 import { db } from "@/lib/firebase";
@@ -38,7 +39,7 @@ export async function createGroup(
 
     // Return the created group with generated ID
     // Note: createdAt/updatedAt are approximate, will be corrected on next read
-    const now = new Date();
+    const now = Timestamp.fromDate(new Date());
     return {
       id: docRef.id,
       ...data,
