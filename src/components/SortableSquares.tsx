@@ -105,6 +105,7 @@ export const SortableSquares = ({
     })
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDragStart = (_event: DragStartEvent) => {
     onDragStart?.();
   };
