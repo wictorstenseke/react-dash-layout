@@ -63,16 +63,18 @@ export function ThemeToggle() {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon-sm"
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-        >
-          <HugeiconsIcon icon={isDark ? Sun03Icon : Moon02Icon} />
-        </Button>
-      </TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+          >
+            <HugeiconsIcon icon={isDark ? Sun03Icon : Moon02Icon} />
+          </Button>
+        }
+      />
       <TooltipContent side="bottom">
         <div className="flex items-center gap-2">
           <span>Switch theme</span>
