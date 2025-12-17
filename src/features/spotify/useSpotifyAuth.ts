@@ -1,12 +1,15 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { doc, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 
+import { doc, onSnapshot } from "firebase/firestore";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { useAuth } from "@/features/auth/AuthProvider";
-import type { UserDocument } from "@/features/auth/types";
 import { db } from "@/lib/firebase";
 
 import { spotifyService } from "./spotifyService";
+
+import type { UserDocument } from "@/features/auth/types";
 
 /**
  * Query keys for Spotify
@@ -24,12 +27,10 @@ export const spotifyKeys = {
 export const useSpotifyStatus = () => {
   const { user } = useAuth();
   const [status, setStatus] = useState<UserDocument["spotify"]>(undefined);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!user?.uid ? false : true);
 
   useEffect(() => {
     if (!user?.uid) {
-      setStatus(undefined);
-      setLoading(false);
       return;
     }
 

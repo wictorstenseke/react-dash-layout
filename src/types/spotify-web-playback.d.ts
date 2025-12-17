@@ -5,6 +5,7 @@ declare global {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-vars
 declare namespace Spotify {
   interface PlayerInit {
     name: string;

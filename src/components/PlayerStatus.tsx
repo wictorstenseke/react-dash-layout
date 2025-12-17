@@ -1,5 +1,5 @@
-import { useSpotifyPlayer } from "@/features/spotify/useSpotifyPlayer";
 import { useSpotifyStatus } from "@/features/spotify/useSpotifyAuth";
+import { useSpotifyPlayer } from "@/features/spotify/useSpotifyPlayer";
 import { cn } from "@/lib/utils";
 
 type PlayerStatusProps = {

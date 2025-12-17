@@ -16,9 +16,10 @@ import {
   useSpotifyPlaylistsQuery,
   useSpotifyPlaylistTracksQuery,
 } from "@/features/spotify/useSpotifyData";
-import type { SpotifyPlaylist } from "@/features/spotify/types";
 import { useCreateTrackMutation, useTracksQuery } from "@/hooks/useTracks";
 import { cn } from "@/lib/utils";
+
+import type { SpotifyPlaylist } from "@/features/spotify/types";
 
 type ImportPlaylistDialogProps = {
   groupId: string;

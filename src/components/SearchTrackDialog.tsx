@@ -15,9 +15,10 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TRACK_COLORS, type TrackColor } from "@/features/groups/types";
 import { useSpotifySearchTracksQuery } from "@/features/spotify/useSpotifyData";
-import type { SpotifyTrack } from "@/features/spotify/types";
 import { useCreateTrackMutation, useTracksQuery } from "@/hooks/useTracks";
 import { cn } from "@/lib/utils";
+
+import type { SpotifyTrack } from "@/features/spotify/types";
 
 const colorClasses: Record<TrackColor, { bg: string; ring: string }> = {
   blue: { bg: "bg-blue-500", ring: "ring-blue-500" },

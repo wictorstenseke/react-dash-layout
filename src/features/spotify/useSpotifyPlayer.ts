@@ -1,10 +1,12 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
 import { doc, setDoc } from "firebase/firestore";
 
 import { useAuth } from "@/features/auth/AuthProvider";
 import { db } from "@/lib/firebase";
 
-import { useSpotifyToken, useSpotifyStatus } from "./useSpotifyAuth";
+import { useSpotifyStatus, useSpotifyToken } from "./useSpotifyAuth";
+
 import type { PlayerState } from "./types";
 
 /**
