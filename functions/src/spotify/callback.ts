@@ -1,4 +1,4 @@
-import * as admin from "firebase-admin";
+import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
 import { onRequest } from "firebase-functions/v2/https";
 import { spotifyClientSecret } from "../utils/spotify-api.js";
 import {
@@ -28,11 +28,11 @@ const validateRedirectUrl = (url: string, fallback: string): string => {
   try {
     const parsed = new URL(url);
     const origin = `${parsed.protocol}//${parsed.host}`;
-    
+
     if (ALLOWED_ORIGINS.includes(origin)) {
       return url;
     }
-    
+
     console.warn("Invalid redirect origin:", origin);
     return fallback;
   } catch {
@@ -61,7 +61,7 @@ export const spotifyCallback = onRequest(
       }
 
       // Validate state and get stored data
-      const db = admin.firestore();
+      const db = getFirestore();
       const stateDoc = await db.collection("oauthStates").doc(state).get();
 
       if (!stateDoc.exists) {
@@ -120,7 +120,7 @@ export const spotifyCallback = onRequest(
           {
             refresh_token: tokens.refresh_token,
             access_token: tokens.access_token,
-            expires_at: admin.firestore.Timestamp.fromDate(expiresAt),
+            expires_at: Timestamp.fromDate(expiresAt),
             scope: tokens.scope,
           },
           { merge: false }
@@ -134,7 +134,7 @@ export const spotifyCallback = onRequest(
           {
             spotify: {
               linked: true,
-              linkedAt: admin.firestore.FieldValue.serverTimestamp(),
+              linkedAt: FieldValue.serverTimestamp(),
               displayName: spotifyUser.display_name,
               premium: spotifyUser.product === "premium",
             },
@@ -146,11 +146,14 @@ export const spotifyCallback = onRequest(
       const defaultOrigin = ALLOWED_ORIGINS[0];
       const frontendUrl = redirectBackUrl || process.env.FRONTEND_URL || "/";
       const baseOrigin = request.headers.origin || defaultOrigin;
-      
+
       const successUrl = new URL(frontendUrl, baseOrigin);
       successUrl.searchParams.set("spotify", "connected");
-      
-      const validatedSuccessUrl = validateRedirectUrl(successUrl.toString(), defaultOrigin);
+
+      const validatedSuccessUrl = validateRedirectUrl(
+        successUrl.toString(),
+        defaultOrigin
+      );
       response.redirect(validatedSuccessUrl);
     } catch (error) {
       console.error("Spotify callback error:", error);
@@ -159,7 +162,7 @@ export const spotifyCallback = onRequest(
       const defaultOrigin = ALLOWED_ORIGINS[0];
       const frontendUrl = process.env.FRONTEND_URL || "/";
       const baseOrigin = request.headers.origin || defaultOrigin;
-      
+
       const errorUrl = new URL(frontendUrl, baseOrigin);
       errorUrl.searchParams.set("spotify", "error");
       errorUrl.searchParams.set(
@@ -167,7 +170,10 @@ export const spotifyCallback = onRequest(
         error instanceof Error ? error.message : "Unknown error"
       );
 
-      const validatedErrorUrl = validateRedirectUrl(errorUrl.toString(), defaultOrigin);
+      const validatedErrorUrl = validateRedirectUrl(
+        errorUrl.toString(),
+        defaultOrigin
+      );
       response.redirect(validatedErrorUrl);
     }
   }

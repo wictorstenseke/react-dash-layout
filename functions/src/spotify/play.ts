@@ -1,5 +1,5 @@
 import { onRequest } from "firebase-functions/v2/https";
-import { verifyAuth } from "../utils/auth.js";
+import { verifyAuth, handleSpotifyError } from "../utils/auth.js";
 import {
   getValidAccessToken,
   spotifyClientSecret,
@@ -37,7 +37,11 @@ export const spotifyPlay = onRequest(
       }
 
       // Get valid access token
-      const accessToken = await getValidAccessToken(uid, clientId, clientSecret);
+      const accessToken = await getValidAccessToken(
+        uid,
+        clientId,
+        clientSecret
+      );
 
       // Build play URL with optional device ID
       const playUrl = deviceId
@@ -64,11 +68,7 @@ export const spotifyPlay = onRequest(
 
       response.status(204).send();
     } catch (error) {
-      console.error("Play track error:", error);
-      response.status(500).json({
-        error: "Internal Server Error",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
+      handleSpotifyError(error, response);
     }
   }
 );

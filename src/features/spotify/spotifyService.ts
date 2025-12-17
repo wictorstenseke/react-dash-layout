@@ -72,25 +72,24 @@ export const spotifyService = {
       {
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        redirect: "manual", // Don't follow redirect automatically
       }
     );
 
-    // Handle redirect
-    if (response.type === "opaqueredirect" || response.status === 302) {
-      const redirectUrl = response.headers.get("Location");
-      if (redirectUrl) {
-        window.location.href = redirectUrl;
-      }
-    } else if (response.ok) {
-      // If response is OK, it might have sent us a redirect URL in body
-      const data = await response.json().catch(() => null);
-      if (data?.redirectUrl) {
-        window.location.href = data.redirectUrl;
-      }
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        message: response.statusText,
+      }));
+      throw new Error(error.message || "Failed to start OAuth flow");
+    }
+
+    // Get redirect URL from response
+    const data = await response.json();
+    if (data.redirectUrl) {
+      window.location.href = data.redirectUrl;
     } else {
-      throw new Error("Failed to start OAuth flow");
+      throw new Error("No redirect URL received from server");
     }
   },
 

@@ -1,7 +1,24 @@
-import * as admin from "firebase-admin";
+import { initializeApp, getApps } from "firebase-admin/app";
 
-// Initialize Firebase Admin
-admin.initializeApp();
+// Connect to Auth emulator in development (must be set BEFORE initializing Admin SDK)
+// Firebase emulator automatically sets FIREBASE_AUTH_EMULATOR_HOST when Auth emulator is running,
+// but we set it manually as a fallback if FUNCTIONS_EMULATOR is set
+const isEmulator =
+  process.env.FUNCTIONS_EMULATOR === "true" ||
+  !!process.env.FIREBASE_EMULATOR_HUB;
+
+if (isEmulator && !process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+  process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
+  console.log(
+    "Configured Auth emulator connection:",
+    process.env.FIREBASE_AUTH_EMULATOR_HOST
+  );
+}
+
+// Initialize Firebase Admin (only if not already initialized)
+if (getApps().length === 0) {
+  initializeApp();
+}
 
 // Export Spotify OAuth functions
 export { spotifyLogin } from "./spotify/login.js";

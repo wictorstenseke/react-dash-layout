@@ -25,7 +25,11 @@ export const spotifyRefresh = onRequest(
       }
 
       // Get or refresh access token
-      const accessToken = await getValidAccessToken(uid, clientId, clientSecret);
+      const accessToken = await getValidAccessToken(
+        uid,
+        clientId,
+        clientSecret
+      );
 
       response.json({
         access_token: accessToken,
@@ -33,9 +37,18 @@ export const spotifyRefresh = onRequest(
       });
     } catch (error) {
       console.error("Spotify refresh error:", error);
-      response.status(401).json({
-        error: "Unauthorized",
-        message: error instanceof Error ? error.message : "Unknown error",
+
+      // Return 403 if Spotify is not linked (user is authenticated but hasn't connected Spotify)
+      // Return 401 for actual authentication errors
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      const isNotLinked =
+        errorMessage.includes("not linked") ||
+        errorMessage.includes("Spotify not linked");
+
+      response.status(isNotLinked ? 403 : 401).json({
+        error: isNotLinked ? "Forbidden" : "Unauthorized",
+        message: errorMessage,
       });
     }
   }

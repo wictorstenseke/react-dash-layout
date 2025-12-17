@@ -136,13 +136,22 @@ export const useSpotifyPlayer = () => {
       setPlayer(spotifyPlayer);
     };
 
+    // Check if SDK is already loaded
     if (window.Spotify) {
+      // SDK already loaded, initialize immediately
       initPlayer();
     } else {
+      // SDK not loaded yet, set up callback
+      // Replace any existing callback (including placeholder from index.html)
       window.onSpotifyWebPlaybackSDKReady = initPlayer;
     }
 
     return () => {
+      // Clean up callback if it was set
+      if (window.onSpotifyWebPlaybackSDKReady === initPlayer) {
+        window.onSpotifyWebPlaybackSDKReady = undefined;
+      }
+
       if (playerRef.current) {
         playerRef.current.disconnect();
         playerRef.current = null;
@@ -218,7 +227,10 @@ export const useSpotifyPlayer = () => {
     playerState,
     currentTrack,
     error,
-    isReady: playerState === "ready" || playerState === "playing" || playerState === "paused",
+    isReady:
+      playerState === "ready" ||
+      playerState === "playing" ||
+      playerState === "paused",
     isPlaying: playerState === "playing",
     isPaused: playerState === "paused",
     canPlay: !!deviceId && !!tokenData,

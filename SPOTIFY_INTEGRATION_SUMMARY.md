@@ -11,12 +11,14 @@ The implementation follows a secure, multi-phase approach integrating Spotify's 
 ### Security Model
 
 **Server-Side Token Management:**
+
 - Refresh tokens are stored in a server-only Firestore collection (`spotifyTokens/{uid}`)
 - Client never has access to refresh tokens
 - Access tokens are obtained through Cloud Functions proxy endpoints
 - PKCE (Proof Key for Code Exchange) used for OAuth flow
 
 **Authentication Flow:**
+
 1. User clicks "Connect Spotify" → Frontend calls `/spotifyLogin` with Firebase Auth token
 2. Cloud Function generates PKCE challenge and redirects to Spotify
 3. Spotify redirects back to `/spotifyCallback` with authorization code
@@ -27,6 +29,7 @@ The implementation follows a secure, multi-phase approach integrating Spotify's 
 ### Components Implemented
 
 #### Phase 1: Data Models
+
 - Extended `Track` type with Spotify metadata (trackId, title, artists, album art, duration, origin)
 - Added `UserDocument` type for Spotify status and settings
 - Updated Firestore rules with server-only `spotifyTokens` collection
@@ -34,17 +37,20 @@ The implementation follows a secure, multi-phase approach integrating Spotify's 
 #### Phase 2: Cloud Functions (Backend)
 
 **OAuth Endpoints:**
+
 - `spotifyLogin` - Initiates OAuth with PKCE
 - `spotifyCallback` - Handles OAuth callback and token exchange
 - `spotifyRefresh` - Returns fresh access token to client
 
 **Proxy Endpoints:**
+
 - `spotifyPlaylists` - Get user's playlists
 - `spotifyPlaylistTracks` - Get tracks from a playlist
 - `spotifySearchTracks` - Search for tracks
 - `spotifyPlay` - Play track (secured proxy)
 
 All endpoints:
+
 - Verify Firebase Auth token
 - Auto-refresh Spotify access token
 - Handle errors gracefully
@@ -52,19 +58,23 @@ All endpoints:
 #### Phase 3: Frontend Integration
 
 **Service Layer:**
+
 - `spotifyService.ts` - API client for Cloud Functions
 - Handles authentication headers
 - Type-safe request/response
 
 **React Hooks:**
+
 - `useSpotifyStatus()` - Real-time Spotify link status from Firestore
-- `useSpotifyToken()` - Get/refresh access token
+- `useSpotifyToken()` - Get/refresh access token (auto-refreshes)
+- `useRefreshSpotifyToken()` - Manually refresh access token
 - `useConnectSpotify()` - Initiate OAuth flow
 - `useSpotifyPlaylistsQuery()` - Fetch playlists with TanStack Query
 - `useSpotifyPlaylistTracksQuery()` - Fetch playlist tracks
 - `useSpotifySearchTracksQuery()` - Search tracks
 
 **UI Components:**
+
 - `SpotifyConnectButton` - OAuth initiation, shows connection status
 - `ImportPlaylistDialog` - Browse playlists, preview tracks, import to group
 - `SearchTrackDialog` - Search, preview, customize label/color, add track
@@ -73,6 +83,7 @@ All endpoints:
 #### Phase 4: Web Playback SDK
 
 **Player Hook:**
+
 - `useSpotifyPlayer()` - Initializes Spotify Web Playback SDK
 - Auto-connects for Premium users
 - Manages player state (idle, ready, playing, paused, error)
@@ -81,6 +92,7 @@ All endpoints:
 - Routes playback through proxy endpoint for security
 
 **Player Features:**
+
 - Automatic initialization when Spotify is linked and user has Premium
 - Real-time playback state tracking
 - Current track information
@@ -151,6 +163,7 @@ src/
    - Prevents token exposure
 
 ### Security Audit Results
+
 - **CodeQL Analysis**: No vulnerabilities found
 - **Code Review**: All critical security issues addressed
 
@@ -195,33 +208,36 @@ src/
 The following components need to be added to the application:
 
 1. **In App Layout/Header:**
+
    ```tsx
    import { SpotifyConnectButton } from "@/components/SpotifyConnectButton";
    import { PlayerStatus } from "@/components/PlayerStatus";
-   
+
    // Show connection status
    <SpotifyConnectButton />
-   
+
    // Show player status
    <PlayerStatus />
    ```
 
 2. **In Group/Track Management:**
+
    ```tsx
    import { ImportPlaylistDialog } from "@/components/ImportPlaylistDialog";
    import { SearchTrackDialog } from "@/components/SearchTrackDialog";
-   
+
    // Add to group actions
    <ImportPlaylistDialog groupId={groupId} />
    <SearchTrackDialog groupId={groupId} />
    ```
 
 3. **In Track Cell (for playback):**
+
    ```tsx
    import { useSpotifyPlayer } from "@/features/spotify/useSpotifyPlayer";
-   
+
    const { play, isReady } = useSpotifyPlayer();
-   
+
    const handleClick = () => {
      if (track.spotifyTrackId && isReady) {
        play(track.spotifyTrackId);
@@ -300,22 +316,27 @@ See [manual-steps.md](./manual-steps.md) for detailed deployment instructions in
 ### Common Issues
 
 **"Spotify not connected"**
+
 - User needs to click "Connect Spotify" and complete OAuth
 
 **"Premium required"**
+
 - Web Playback SDK requires Spotify Premium subscription
 
 **"Player not ready"**
+
 - SDK may still be initializing
 - Check browser console for SDK errors
 - Verify Spotify credentials are correct
 
 **OAuth redirect fails**
+
 - Verify redirect URIs in Spotify Dashboard match exactly
 - Check that Firebase Functions are deployed
 - Verify SPOTIFY_CLIENT_ID is set
 
 **Token refresh fails**
+
 - Check SPOTIFY_CLIENT_SECRET is set as Firebase secret
 - Verify refresh token exists in `spotifyTokens/{uid}`
 - Check Firebase Functions logs
@@ -326,7 +347,7 @@ To enable debug logging:
 
 ```javascript
 // In browser console
-localStorage.debug = 'spotify:*';
+localStorage.debug = "spotify:*";
 ```
 
 ## Conclusion

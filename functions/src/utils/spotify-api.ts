@@ -1,4 +1,4 @@
-import * as admin from "firebase-admin";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { defineSecret } from "firebase-functions/params";
 
 export const spotifyClientSecret = defineSecret("SPOTIFY_CLIENT_SECRET");
@@ -88,7 +88,7 @@ export const getValidAccessToken = async (
   clientId: string,
   clientSecret: string
 ): Promise<string> => {
-  const db = admin.firestore();
+  const db = getFirestore();
   const tokenDoc = await db.collection("spotifyTokens").doc(uid).get();
 
   if (!tokenDoc.exists) {
@@ -122,7 +122,7 @@ export const getValidAccessToken = async (
   const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
   await tokenDoc.ref.update({
     access_token: tokens.access_token,
-    expires_at: admin.firestore.Timestamp.fromDate(expiresAt),
+    expires_at: Timestamp.fromDate(expiresAt),
   });
 
   return tokens.access_token;

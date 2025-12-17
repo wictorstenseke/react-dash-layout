@@ -13,7 +13,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Cancel01Icon, Edit02Icon } from "@hugeicons/core-free-icons";
+import { Cancel01Icon, Edit02Icon, PlayIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import {
@@ -23,6 +23,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { useSpotifyPlayer } from "@/features/spotify/useSpotifyPlayer";
 import { cn } from "@/lib/utils";
 
 import type { Track, TrackColor } from "@/features/groups/types";
@@ -55,6 +56,7 @@ const SortableTrack = ({ track, onDelete, onRename }: SortableTrackProps) => {
     transition,
     isDragging,
   } = useSortable({ id: track.id });
+  const { play, isReady } = useSpotifyPlayer();
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -70,6 +72,14 @@ const SortableTrack = ({ track, onDelete, onRename }: SortableTrackProps) => {
     onRename?.(track.id);
   };
 
+  const handlePlay = () => {
+    if (track.spotifyTrackId && isReady) {
+      play(track.spotifyTrackId);
+    }
+  };
+
+  const canPlay = !!track.spotifyTrackId && isReady;
+
   return (
     <ContextMenu>
       <ContextMenuTrigger>
@@ -78,10 +88,21 @@ const SortableTrack = ({ track, onDelete, onRename }: SortableTrackProps) => {
           style={style}
           {...attributes}
           {...listeners}
+          onClick={canPlay ? handlePlay : undefined}
           className={cn(
             colorClasses[track.color],
-            "group/track relative w-18 h-18 rounded-md flex items-center justify-center text-white font-semibold cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow"
+            "group/track relative w-18 h-18 rounded-md flex items-center justify-center text-white font-semibold shadow-sm hover:shadow-md transition-shadow",
+            canPlay
+              ? "cursor-pointer hover:scale-105"
+              : "cursor-grab active:cursor-grabbing"
           )}
+          title={
+            canPlay
+              ? `Play: ${track.title || track.label}`
+              : track.spotifyTrackId
+                ? "Player not ready"
+                : undefined
+          }
         >
           <span className="text-xs text-center px-1 truncate max-w-full">
             {track.label}
@@ -89,6 +110,18 @@ const SortableTrack = ({ track, onDelete, onRename }: SortableTrackProps) => {
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
+        {canPlay && (
+          <ContextMenuItem
+            onSelect={(event) => {
+              event.preventDefault();
+              handlePlay();
+            }}
+          >
+            <HugeiconsIcon icon={PlayIcon} className="mr-2 size-4" />
+            <span>Play</span>
+          </ContextMenuItem>
+        )}
+        {canPlay && (onRename || onDelete) && <ContextMenuSeparator />}
         {onRename && (
           <ContextMenuItem
             onSelect={(event) => {

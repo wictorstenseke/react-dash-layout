@@ -76,11 +76,12 @@ export const useConnectSpotify = () => {
  */
 export const useSpotifyToken = () => {
   const { user } = useAuth();
+  const { isLinked } = useSpotifyStatus();
 
   return useQuery({
     queryKey: spotifyKeys.token(),
     queryFn: () => spotifyService.refreshToken(),
-    enabled: !!user,
+    enabled: !!user && isLinked, // Only fetch if user is logged in AND Spotify is linked
     staleTime: 50 * 60 * 1000, // 50 minutes (tokens last 60 min)
     retry: 1,
     refetchOnWindowFocus: false,

@@ -1,5 +1,5 @@
 import { onRequest } from "firebase-functions/v2/https";
-import { verifyAuth } from "../utils/auth.js";
+import { verifyAuth, handleSpotifyError } from "../utils/auth.js";
 import {
   getValidAccessToken,
   spotifyApiRequest,
@@ -59,7 +59,11 @@ export const spotifyPlaylistTracks = onRequest(
       }
 
       // Get valid access token
-      const accessToken = await getValidAccessToken(uid, clientId, clientSecret);
+      const accessToken = await getValidAccessToken(
+        uid,
+        clientId,
+        clientSecret
+      );
 
       // Get pagination params
       const limit = Math.min(
@@ -76,11 +80,7 @@ export const spotifyPlaylistTracks = onRequest(
 
       response.json(data);
     } catch (error) {
-      console.error("Spotify playlist tracks error:", error);
-      response.status(500).json({
-        error: "Internal Server Error",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
+      handleSpotifyError(error, response);
     }
   }
 );
