@@ -8,7 +8,7 @@ import { listGroups } from "@/features/groups/groupsRepo";
  * Logs auth state changes and tests Firestore read operations
  */
 export function DevAuthProbe() {
-  const { user, loading } = useAuth();
+  const { user, loading, error: authError } = useAuth();
   const [groupsCount, setGroupsCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,11 +85,14 @@ export function DevAuthProbe() {
         🔧 Dev Auth Probe
       </div>
       {loading ? (
-        <div>Loading auth state...</div>
+        <div>⏳ Loading auth state...</div>
       ) : user ? (
         <>
           <div style={{ marginBottom: "4px" }}>
-            ✅ User: {user.email || user.uid.substring(0, 8)}
+            ✅ Authed | UID: {user.uid.substring(0, 8)}…
+          </div>
+          <div style={{ marginBottom: "4px" }}>
+            📧 {user.email || "No email"}
           </div>
           <div style={{ marginBottom: "4px" }}>
             📊 Groups:{" "}
@@ -104,7 +107,20 @@ export function DevAuthProbe() {
           )}
         </>
       ) : (
-        <div>❌ No user signed in</div>
+        <div>❌ Not authed</div>
+      )}
+      {authError && (
+        <div
+          style={{
+            marginTop: "8px",
+            paddingTop: "8px",
+            borderTop: "1px solid rgba(255, 255, 255, 0.2)",
+            color: "#ff6b6b",
+            fontSize: "11px",
+          }}
+        >
+          ⚠️ Auth Error: {authError.message}
+        </div>
       )}
     </div>
   );

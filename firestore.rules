@@ -9,6 +9,11 @@ service cloud.firestore {
       // Groups subcollection
       match /groups/{groupId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
+
+        // Tracks subcollection within groups
+        match /tracks/{trackId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
       }
     }
 
