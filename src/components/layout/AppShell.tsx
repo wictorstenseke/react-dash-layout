@@ -1,17 +1,32 @@
 import type { ReactNode } from "react";
 
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/features/auth/AuthProvider";
+import { signOutUser } from "@/features/auth/authService";
 
 interface AppShellProps {
   children: ReactNode;
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const { isAuthed, loading } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    const result = await signOutUser();
+    if (result.success) {
+      navigate({ to: "/login" });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="container mx-auto flex h-14 max-w-screen-2xl items-center px-4 sm:px-6 lg:px-8">
+        <div className="container mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="mr-4 flex">
             <Link
               to="/"
@@ -48,7 +63,28 @@ export function AppShell({ children }: AppShellProps) {
               >
                 Example
               </Link>
+              <Link
+                to="/app"
+                className="transition-colors hover:text-foreground/80"
+                activeProps={{ className: "text-foreground" }}
+                inactiveProps={{ className: "text-foreground/60" }}
+              >
+                App
+              </Link>
             </nav>
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {!loading && isAuthed && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                className="text-sm"
+              >
+                Sign out
+              </Button>
+            )}
           </div>
         </div>
       </header>

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 
 import {
+  ArrowReloadHorizontalIcon,
   DragDropHorizontalIcon,
   SquareArrowDiagonal02Icon,
+  Upload03Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import ReactGridLayout, {
@@ -12,6 +14,7 @@ import ReactGridLayout, {
 } from "react-grid-layout";
 
 import { SortableSquares } from "@/components/SortableSquares";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const STORAGE_KEY = "grid-layout";
@@ -158,19 +161,18 @@ export function Example() {
           <h1 className="text-3xl font-bold tracking-tight">
             Grid Layout Example
           </h1>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleBringToTop}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors underline"
-            >
-              Bring to top
-            </button>
-            <button
-              onClick={handleResetLayout}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors underline"
-            >
-              Reset layout
-            </button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleBringToTop}>
+              <HugeiconsIcon icon={Upload03Icon} className="mr-1.5" />
+              <span>Bring to top</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleResetLayout}>
+              <HugeiconsIcon
+                icon={ArrowReloadHorizontalIcon}
+                className="mr-1.5"
+              />
+              <span>Reset layout</span>
+            </Button>
           </div>
         </div>
         <p className="text-muted-foreground">
