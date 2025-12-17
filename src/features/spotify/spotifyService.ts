@@ -56,6 +56,7 @@ const fetchWithAuth = async <T>(
 export const spotifyService = {
   /**
    * Start Spotify OAuth flow
+   * Note: Uses fetch with Authorization header, then redirects based on response
    */
   startOAuthFlow: async (redirectBackUrl?: string): Promise<void> => {
     const token = await getAuthToken();
@@ -64,8 +65,32 @@ export const spotifyService = {
       params.set("redirectBackUrl", redirectBackUrl);
     }
 
-    const url = `${FUNCTIONS_BASE_URL}/spotifyLogin?${params.toString()}`;
-    window.location.href = url + `&token=${token}`;
+    // Make authenticated request to get redirect URL
+    const response = await fetch(
+      `${FUNCTIONS_BASE_URL}/spotifyLogin?${params.toString()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        redirect: "manual", // Don't follow redirect automatically
+      }
+    );
+
+    // Handle redirect
+    if (response.type === "opaqueredirect" || response.status === 302) {
+      const redirectUrl = response.headers.get("Location");
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      }
+    } else if (response.ok) {
+      // If response is OK, it might have sent us a redirect URL in body
+      const data = await response.json().catch(() => null);
+      if (data?.redirectUrl) {
+        window.location.href = data.redirectUrl;
+      }
+    } else {
+      throw new Error("Failed to start OAuth flow");
+    }
   },
 
   /**
@@ -114,5 +139,15 @@ export const spotifyService = {
     return fetchWithAuth<SpotifySearchResponse>(
       `/spotifySearchTracks?q=${encodedQuery}&limit=${limit}&offset=${offset}`
     );
+  },
+
+  /**
+   * Play a track on Spotify
+   */
+  playTrack: async (trackId: string, deviceId?: string): Promise<void> => {
+    await fetchWithAuth<void>("/spotifyPlay", {
+      method: "POST",
+      body: JSON.stringify({ trackId, deviceId }),
+    });
   },
 };

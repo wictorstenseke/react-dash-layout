@@ -12,3 +12,4 @@ export { spotifyRefresh } from "./spotify/refresh.js";
 export { spotifyPlaylists } from "./spotify/playlists.js";
 export { spotifyPlaylistTracks } from "./spotify/playlistTracks.js";
 export { spotifySearchTracks } from "./spotify/searchTracks.js";
+export { spotifyPlay } from "./spotify/play.js";

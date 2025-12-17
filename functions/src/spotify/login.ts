@@ -1,7 +1,7 @@
 import * as admin from "firebase-admin";
 import { onRequest } from "firebase-functions/v2/https";
 import { verifyAuth } from "../utils/auth.js";
-import { randomBytes } from "crypto";
+import { randomBytes, createHash } from "crypto";
 
 const SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize";
 const SCOPES = [
@@ -12,15 +12,15 @@ const SCOPES = [
 ].join(" ");
 
 /**
- * Generate code verifier and challenge for PKCE
+ * Generate code verifier and challenge for PKCE (RFC 7636)
+ * Challenge is SHA256 hash of verifier
  */
 const generatePKCE = () => {
   const verifier = randomBytes(32).toString("base64url");
-  const challenge = randomBytes(32)
-    .toString("base64url")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=/g, "");
+  
+  // Create SHA256 hash of verifier
+  const hash = createHash("sha256").update(verifier).digest();
+  const challenge = hash.toString("base64url");
 
   return { verifier, challenge };
 };

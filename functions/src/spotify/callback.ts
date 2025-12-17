@@ -13,6 +13,33 @@ type SpotifyUser = {
   email: string;
 };
 
+// Allowed origins for redirects to prevent open redirect attacks
+const ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://spotdash-dbaf2.web.app",
+  "https://spotdash-dbaf2.firebaseapp.com",
+];
+
+/**
+ * Validate redirect URL to prevent open redirect attacks
+ */
+const validateRedirectUrl = (url: string, fallback: string): string => {
+  try {
+    const parsed = new URL(url);
+    const origin = `${parsed.protocol}//${parsed.host}`;
+    
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      return url;
+    }
+    
+    console.warn("Invalid redirect origin:", origin);
+    return fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 /**
  * Handle Spotify OAuth callback
  * GET /spotify/callback?code=...&state=...
@@ -115,25 +142,33 @@ export const spotifyCallback = onRequest(
           { merge: true }
         );
 
-      // Redirect back to frontend
+      // Redirect back to frontend (validated)
+      const defaultOrigin = ALLOWED_ORIGINS[0];
       const frontendUrl = redirectBackUrl || process.env.FRONTEND_URL || "/";
-      const successUrl = new URL(frontendUrl, request.headers.origin || "http://localhost:5173");
+      const baseOrigin = request.headers.origin || defaultOrigin;
+      
+      const successUrl = new URL(frontendUrl, baseOrigin);
       successUrl.searchParams.set("spotify", "connected");
-
-      response.redirect(successUrl.toString());
+      
+      const validatedSuccessUrl = validateRedirectUrl(successUrl.toString(), defaultOrigin);
+      response.redirect(validatedSuccessUrl);
     } catch (error) {
       console.error("Spotify callback error:", error);
 
-      // Redirect to frontend with error
+      // Redirect to frontend with error (validated)
+      const defaultOrigin = ALLOWED_ORIGINS[0];
       const frontendUrl = process.env.FRONTEND_URL || "/";
-      const errorUrl = new URL(frontendUrl, request.headers.origin || "http://localhost:5173");
+      const baseOrigin = request.headers.origin || defaultOrigin;
+      
+      const errorUrl = new URL(frontendUrl, baseOrigin);
       errorUrl.searchParams.set("spotify", "error");
       errorUrl.searchParams.set(
         "message",
         error instanceof Error ? error.message : "Unknown error"
       );
 
-      response.redirect(errorUrl.toString());
+      const validatedErrorUrl = validateRedirectUrl(errorUrl.toString(), defaultOrigin);
+      response.redirect(validatedErrorUrl);
     }
   }
 );

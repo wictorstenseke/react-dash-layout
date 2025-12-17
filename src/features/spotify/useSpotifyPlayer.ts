@@ -154,37 +154,22 @@ export const useSpotifyPlayer = () => {
   // Play track
   const play = useCallback(
     async (spotifyTrackId: string) => {
-      if (!deviceId || !tokenData?.access_token) {
+      if (!deviceId) {
         setError("Player not ready");
         return;
       }
 
       try {
-        const response = await fetch(
-          `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
-          {
-            method: "PUT",
-            headers: {
-              Authorization: `Bearer ${tokenData.access_token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              uris: [`spotify:track:${spotifyTrackId}`],
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`Failed to play track: ${response.status}`);
-        }
-
+        // Use proxy endpoint instead of direct API call
+        const { spotifyService } = await import("./spotifyService");
+        await spotifyService.playTrack(spotifyTrackId, deviceId);
         setPlayerState("playing");
       } catch (err) {
         console.error("Play error:", err);
         setError(err instanceof Error ? err.message : "Failed to play track");
       }
     },
-    [deviceId, tokenData]
+    [deviceId]
   );
 
   // Pause
