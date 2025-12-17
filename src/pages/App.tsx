@@ -53,43 +53,49 @@ export const App = () => {
 
   // Load layout when user changes
   useEffect(() => {
-    if (user?.uid) {
-      setLayout(loadLayout(user.uid));
-    }
+    if (!user?.uid) return;
+
+    // Schedule state update asynchronously to avoid cascading renders warning
+    queueMicrotask(() => {
+      setLayout(loadLayout(user.uid!));
+    });
   }, [user?.uid]);
 
   // Generate default layout for new groups
   useEffect(() => {
     if (groups.length === 0) return;
 
-    setLayout((currentLayout) => {
-      const existingIds = new Set(currentLayout.map((item) => item.i));
-      const newItems: Layout = [];
+    // Schedule state update asynchronously to avoid cascading renders warning
+    queueMicrotask(() => {
+      setLayout((currentLayout) => {
+        const existingIds = new Set(currentLayout.map((item) => item.i));
+        const newItems: Layout = [];
 
-      groups.forEach((group, index) => {
-        if (!existingIds.has(group.id)) {
-          // Calculate position for new group
-          const row = Math.floor(index / 3);
-          const col = index % 3;
-          newItems.push({
-            i: group.id,
-            x: col * 16,
-            y: row * 10,
-            w: 14,
-            h: 10,
-          });
-        }
+        groups.forEach((group, index) => {
+          if (!existingIds.has(group.id)) {
+            // Calculate position for new group
+            const row = Math.floor(index / 3);
+            const col = index % 3;
+            newItems.push({
+              i: group.id,
+              x: col * 16,
+              y: row * 10,
+              w: 14,
+              h: 10,
+            });
+          }
+        });
+
+        if (newItems.length === 0) return currentLayout;
+
+        // Filter out layouts for deleted groups
+        const validGroupIds = new Set(groups.map((g) => g.id));
+        const filteredLayout = currentLayout.filter((item) =>
+          validGroupIds.has(item.i)
+        );
+
+        return [...filteredLayout, ...newItems];
       });
-
-      if (newItems.length === 0) return currentLayout;
-
-      // Filter out layouts for deleted groups
-      const validGroupIds = new Set(groups.map((g) => g.id));
-      const filteredLayout = currentLayout.filter((item) =>
-        validGroupIds.has(item.i)
-      );
-
-      return [...filteredLayout, ...newItems];
     });
   }, [groups]);
 

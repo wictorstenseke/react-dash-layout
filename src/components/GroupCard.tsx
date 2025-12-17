@@ -9,12 +9,14 @@ import { AddTrackDialog } from "@/components/AddTrackDialog";
 import { SortableTracks } from "@/components/SortableTracks";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { Group, GroupColor } from "@/features/groups/types";
 import {
   useDeleteTrackMutation,
   useReorderTracksMutation,
   useTracksQuery,
+  useUpdateTrackMutation,
 } from "@/hooks/useTracks";
+
+import type { Group, GroupColor } from "@/features/groups/types";
 
 const groupColorClasses: Record<GroupColor, { bg: string; border: string }> = {
   blue: {
@@ -75,6 +77,7 @@ export const GroupCard = ({
   const { data: tracks = [], isLoading } = useTracksQuery(group.id);
   const reorderTracks = useReorderTracksMutation(group.id);
   const deleteTrack = useDeleteTrackMutation(group.id);
+  const updateTrack = useUpdateTrackMutation(group.id);
 
   const colorClasses = groupColorClasses[group.color];
 
@@ -84,6 +87,22 @@ export const GroupCard = ({
 
   const handleDeleteTrack = (trackId: string) => {
     deleteTrack.mutate(trackId);
+  };
+
+  const handleRenameTrack = (trackId: string) => {
+    const track = tracks.find((t) => t.id === trackId);
+    if (!track) return;
+
+    const nextLabel = window.prompt("Rename track", track.label);
+    if (!nextLabel) return;
+
+    const trimmed = nextLabel.trim();
+    if (!trimmed || trimmed === track.label) return;
+
+    updateTrack.mutate({
+      trackId,
+      data: { label: trimmed },
+    });
   };
 
   return (
@@ -133,6 +152,7 @@ export const GroupCard = ({
                 tracks={tracks}
                 onReorder={handleReorder}
                 onDelete={handleDeleteTrack}
+                onRename={handleRenameTrack}
                 onDragStart={onSquareDragStart}
                 onDragEnd={onSquareDragEnd}
               />

@@ -2,7 +2,6 @@ import {
   DndContext,
   closestCenter,
   type DragEndEvent,
-  type DragStartEvent,
   PointerSensor,
   useSensor,
   useSensors,
@@ -14,11 +13,19 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Cancel01Icon } from "@hugeicons/core-free-icons";
+import { Cancel01Icon, Edit02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
-import type { Track, TrackColor } from "@/features/groups/types";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
+
+import type { Track, TrackColor } from "@/features/groups/types";
 
 const colorClasses: Record<TrackColor, string> = {
   blue: "bg-blue-500",
@@ -36,9 +43,10 @@ const colorClasses: Record<TrackColor, string> = {
 type SortableTrackProps = {
   track: Track;
   onDelete?: (trackId: string) => void;
+  onRename?: (trackId: string) => void;
 };
 
-const SortableTrack = ({ track, onDelete }: SortableTrackProps) => {
+const SortableTrack = ({ track, onDelete, onRename }: SortableTrackProps) => {
   const {
     attributes,
     listeners,
@@ -54,37 +62,61 @@ const SortableTrack = ({ track, onDelete }: SortableTrackProps) => {
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDelete = () => {
     onDelete?.(track.id);
   };
 
+  const handleRename = () => {
+    onRename?.(track.id);
+  };
+
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      className={cn(
-        colorClasses[track.color],
-        "group/track relative w-18 h-18 rounded-md flex items-center justify-center text-white font-semibold cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow"
-      )}
-    >
-      <span className="text-xs text-center px-1 truncate max-w-full">
-        {track.label}
-      </span>
-      {onDelete && (
-        <button
-          type="button"
-          onClick={handleDelete}
-          onPointerDown={(e) => e.stopPropagation()}
-          className="absolute -top-1.5 -right-1.5 size-5 rounded-full bg-background text-foreground shadow-sm opacity-0 group-hover/track:opacity-100 transition-opacity flex items-center justify-center hover:bg-destructive hover:text-white"
-          aria-label={`Delete ${track.label}`}
+    <ContextMenu>
+      <ContextMenuTrigger>
+        <div
+          ref={setNodeRef}
+          style={style}
+          {...attributes}
+          {...listeners}
+          className={cn(
+            colorClasses[track.color],
+            "group/track relative w-18 h-18 rounded-md flex items-center justify-center text-white font-semibold cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-shadow"
+          )}
         >
-          <HugeiconsIcon icon={Cancel01Icon} className="size-3" />
-        </button>
-      )}
-    </div>
+          <span className="text-xs text-center px-1 truncate max-w-full">
+            {track.label}
+          </span>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        {onRename && (
+          <ContextMenuItem
+            onSelect={(event) => {
+              event.preventDefault();
+              handleRename();
+            }}
+          >
+            <HugeiconsIcon icon={Edit02Icon} className="mr-2 size-4" />
+            <span>Rename</span>
+          </ContextMenuItem>
+        )}
+        {onDelete && (
+          <>
+            {onRename && <ContextMenuSeparator />}
+            <ContextMenuItem
+              variant="destructive"
+              onSelect={(event) => {
+                event.preventDefault();
+                handleDelete();
+              }}
+            >
+              <HugeiconsIcon icon={Cancel01Icon} className="mr-2 size-4" />
+              <span>Remove</span>
+            </ContextMenuItem>
+          </>
+        )}
+      </ContextMenuContent>
+    </ContextMenu>
   );
 };
 
@@ -93,6 +125,7 @@ type SortableTracksProps = {
   tracks: Track[];
   onReorder?: (trackIds: string[]) => void;
   onDelete?: (trackId: string) => void;
+  onRename?: (trackId: string) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
 };
@@ -102,6 +135,7 @@ export const SortableTracks = ({
   tracks,
   onReorder,
   onDelete,
+  onRename,
   onDragStart,
   onDragEnd,
 }: SortableTracksProps) => {
@@ -114,7 +148,7 @@ export const SortableTracks = ({
     })
   );
 
-  const handleDragStart = (_event: DragStartEvent) => {
+  const handleDragStart = () => {
     onDragStart?.();
   };
 
@@ -152,7 +186,12 @@ export const SortableTracks = ({
       >
         <div className="flex flex-wrap gap-2 justify-center">
           {tracks.map((track) => (
-            <SortableTrack key={track.id} track={track} onDelete={onDelete} />
+            <SortableTrack
+              key={track.id}
+              track={track}
+              onDelete={onDelete}
+              onRename={onRename}
+            />
           ))}
         </div>
       </SortableContext>
