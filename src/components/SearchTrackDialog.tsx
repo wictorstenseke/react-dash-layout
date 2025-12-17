@@ -75,7 +75,7 @@ export const SearchTrackDialog = ({
       spotifyTrackId: selectedTrack.id,
       title: selectedTrack.name,
       artists: selectedTrack.artists.map((a) => a.name),
-      albumImageUrl: selectedTrack.album.images[0]?.url,
+      albumImageUrl: selectedTrack.album.images?.[0]?.url,
       durationMs: selectedTrack.duration_ms,
       origin: {
         type: "manual",

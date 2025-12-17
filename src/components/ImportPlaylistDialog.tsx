@@ -64,7 +64,7 @@ export const ImportPlaylistDialog = ({
           spotifyTrackId: track.id,
           title: track.name,
           artists: track.artists.map((a) => a.name),
-          albumImageUrl: track.album.images[0]?.url,
+          albumImageUrl: track.album.images?.[0]?.url,
           durationMs: track.duration_ms,
           origin: {
             type: "playlist",
@@ -133,7 +133,7 @@ export const ImportPlaylistDialog = ({
                       "hover:bg-accent hover:text-accent-foreground"
                     )}
                   >
-                    {playlist.images[0]?.url && (
+                    {playlist.images?.[0]?.url && (
                       <img
                         src={playlist.images[0].url}
                         alt={playlist.name}
@@ -168,7 +168,7 @@ export const ImportPlaylistDialog = ({
                     <span className="text-muted-foreground w-8 text-right">
                       {index + 1}
                     </span>
-                    {item.track.album.images[0]?.url && (
+                    {item.track.album.images?.[0]?.url && (
                       <img
                         src={item.track.album.images[0].url}
                         alt={item.track.name}
