@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   ArrowReloadHorizontalIcon,
@@ -55,55 +55,55 @@ export const App = () => {
   const [layout, setLayout] = useState<Layout>([]);
   const [isSquareDragging, setIsSquareDragging] = useState(false);
 
+  // Track previous group IDs to detect actual changes
+  const prevGroupIdsRef = useRef<string>("");
+
   // Sync layout when user or groups change
+  // Note: This effect synchronizes React state with localStorage (external system)
+  // and merges with dynamic group data, which is a legitimate use case for effects.
   useEffect(() => {
-    if (!user?.uid || groups.length === 0) return;
-
-    setLayout((currentLayout) => {
-      // Load saved layout from localStorage
-      const savedLayout = loadLayout(user.uid!);
-      const savedLayoutMap = new Map(savedLayout.map((item) => [item.i, item]));
-
-      // Build final layout: use saved positions/sizes, or generate defaults for new groups
-      const finalLayout: Layout = groups.map((group, index) => {
-        if (savedLayoutMap.has(group.id)) {
-          // Use saved layout for this group
-          return savedLayoutMap.get(group.id)!;
-        } else {
-          // Generate default layout for new group
-          const row = Math.floor(index / 3);
-          const col = index % 3;
-          return {
-            i: group.id,
-            x: col * 16,
-            y: row * 10,
-            w: DEFAULT_WIDTH,
-            h: DEFAULT_HEIGHT,
-          };
-        }
-      });
-
-      // Only update if layout actually changed (avoids infinite loops)
-      if (
-        finalLayout.length === currentLayout.length &&
-        finalLayout.every((item, i) => {
-          const curr = currentLayout[i];
-          return (
-            curr &&
-            item.i === curr.i &&
-            item.x === curr.x &&
-            item.y === curr.y &&
-            item.w === curr.w &&
-            item.h === curr.h
-          );
-        })
-      ) {
-        return currentLayout;
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (!user?.uid || groups.length === 0) {
+      if (layout.length > 0) {
+        setLayout([]);
       }
+      prevGroupIdsRef.current = "";
+      return;
+    }
 
-      return finalLayout;
+    // Check if groups actually changed by comparing IDs
+    const currentGroupIds = groups.map((g) => g.id).join(",");
+    if (prevGroupIdsRef.current === currentGroupIds) {
+      return; // No change in groups, skip update
+    }
+    prevGroupIdsRef.current = currentGroupIds;
+
+    // Load saved layout from localStorage
+    const savedLayout = loadLayout(user.uid);
+    const savedLayoutMap = new Map(savedLayout.map((item) => [item.i, item]));
+
+    // Build final layout: use saved positions/sizes, or generate defaults for new groups
+    const newLayout: Layout = groups.map((group, index) => {
+      if (savedLayoutMap.has(group.id)) {
+        // Use saved layout for this group
+        return savedLayoutMap.get(group.id)!;
+      } else {
+        // Generate default layout for new group
+        const row = Math.floor(index / 3);
+        const col = index % 3;
+        return {
+          i: group.id,
+          x: col * 16,
+          y: row * 10,
+          w: DEFAULT_WIDTH,
+          h: DEFAULT_HEIGHT,
+        };
+      }
     });
-  }, [user?.uid, groups]);
+
+    setLayout(newLayout);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [user?.uid, groups, layout.length]);
 
   // Save layout when it changes
   useEffect(() => {

@@ -30,7 +30,7 @@ const colorClasses: Record<GroupColor, { bg: string; ring: string }> = {
 };
 
 type CreateGroupDialogProps = {
-  trigger?: React.ReactNode;
+  trigger?: React.ReactElement;
 };
 
 export const CreateGroupDialog = ({ trigger }: CreateGroupDialogProps) => {

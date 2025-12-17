@@ -31,7 +31,7 @@ const colorClasses: Record<TrackColor, { bg: string; ring: string }> = {
 
 type AddTrackDialogProps = {
   groupId: string;
-  trigger?: React.ReactNode;
+  trigger?: React.ReactElement;
 };
 
 export const AddTrackDialog = ({ groupId, trigger }: AddTrackDialogProps) => {
