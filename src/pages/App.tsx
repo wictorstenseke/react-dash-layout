@@ -22,10 +22,14 @@ const STORAGE_KEY_PREFIX = "dashboard-layout-";
 
 const getStorageKey = (uid: string) => `${STORAGE_KEY_PREFIX}${uid}`;
 
+const DEFAULT_WIDTH = 11;
+const DEFAULT_HEIGHT = 8;
+
 const loadLayout = (uid: string): Layout => {
   try {
     const saved = localStorage.getItem(getStorageKey(uid));
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+    return JSON.parse(saved);
   } catch {
     return [];
   }
@@ -51,53 +55,55 @@ export const App = () => {
   const [layout, setLayout] = useState<Layout>([]);
   const [isSquareDragging, setIsSquareDragging] = useState(false);
 
-  // Load layout when user changes
+  // Sync layout when user or groups change
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid || groups.length === 0) return;
 
-    // Schedule state update asynchronously to avoid cascading renders warning
-    queueMicrotask(() => {
-      setLayout(loadLayout(user.uid!));
-    });
-  }, [user?.uid]);
+    setLayout((currentLayout) => {
+      // Load saved layout from localStorage
+      const savedLayout = loadLayout(user.uid!);
+      const savedLayoutMap = new Map(savedLayout.map((item) => [item.i, item]));
 
-  // Generate default layout for new groups
-  useEffect(() => {
-    if (groups.length === 0) return;
-
-    // Schedule state update asynchronously to avoid cascading renders warning
-    queueMicrotask(() => {
-      setLayout((currentLayout) => {
-        const existingIds = new Set(currentLayout.map((item) => item.i));
-        const newItems: Layout = [];
-
-        groups.forEach((group, index) => {
-          if (!existingIds.has(group.id)) {
-            // Calculate position for new group
-            const row = Math.floor(index / 3);
-            const col = index % 3;
-            newItems.push({
-              i: group.id,
-              x: col * 16,
-              y: row * 10,
-              w: 14,
-              h: 10,
-            });
-          }
-        });
-
-        if (newItems.length === 0) return currentLayout;
-
-        // Filter out layouts for deleted groups
-        const validGroupIds = new Set(groups.map((g) => g.id));
-        const filteredLayout = currentLayout.filter((item) =>
-          validGroupIds.has(item.i)
-        );
-
-        return [...filteredLayout, ...newItems];
+      // Build final layout: use saved positions/sizes, or generate defaults for new groups
+      const finalLayout: Layout = groups.map((group, index) => {
+        if (savedLayoutMap.has(group.id)) {
+          // Use saved layout for this group
+          return savedLayoutMap.get(group.id)!;
+        } else {
+          // Generate default layout for new group
+          const row = Math.floor(index / 3);
+          const col = index % 3;
+          return {
+            i: group.id,
+            x: col * 16,
+            y: row * 10,
+            w: DEFAULT_WIDTH,
+            h: DEFAULT_HEIGHT,
+          };
+        }
       });
+
+      // Only update if layout actually changed (avoids infinite loops)
+      if (
+        finalLayout.length === currentLayout.length &&
+        finalLayout.every((item, i) => {
+          const curr = currentLayout[i];
+          return (
+            curr &&
+            item.i === curr.i &&
+            item.x === curr.x &&
+            item.y === curr.y &&
+            item.w === curr.w &&
+            item.h === curr.h
+          );
+        })
+      ) {
+        return currentLayout;
+      }
+
+      return finalLayout;
     });
-  }, [groups]);
+  }, [user?.uid, groups]);
 
   // Save layout when it changes
   useEffect(() => {
@@ -121,8 +127,8 @@ export const App = () => {
         i: group.id,
         x: col * 16,
         y: row * 10,
-        w: 14,
-        h: 10,
+        w: DEFAULT_WIDTH,
+        h: DEFAULT_HEIGHT,
       };
     });
     setLayout(defaultLayout);
@@ -205,7 +211,7 @@ export const App = () => {
 
       {/* Grid Layout Container */}
       <div ref={containerRef} className="w-full">
-        {mounted && (
+        {mounted && layout.length > 0 && (
           <ReactGridLayout
             layout={layout}
             onLayoutChange={handleLayoutChange}
