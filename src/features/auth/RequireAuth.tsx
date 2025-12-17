@@ -27,10 +27,10 @@ export const RequireAuth = ({ children }: RequireAuthProps) => {
   }
 
   if (!isAuthed) {
-    // Store the intended destination in the ?next= search param
-    const currentPath = location.pathname + location.search;
+    // Store the intended destination (including search/hash) in the ?next= param
+    const currentHref = location.href;
     const searchParams =
-      currentPath !== "/" ? { next: currentPath } : undefined;
+      currentHref !== "/" ? { next: currentHref } : undefined;
 
     return <Navigate to="/login" search={searchParams} />;
   }
