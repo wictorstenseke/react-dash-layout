@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 
 import {
+  Add01Icon,
   ArrowReloadHorizontalIcon,
+  PauseIcon,
+  PlayIcon,
   Playlist01Icon,
-  Upload03Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import ReactGridLayout, {
   useContainerWidth,
   type Layout,
-  verticalCompactor,
 } from "react-grid-layout";
 
 import { CommandPalette } from "@/components/CommandPalette";
@@ -24,6 +25,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { useSpotifyPlayer } from "@/features/spotify/useSpotifyPlayer";
 import {
   useCreateGroupMutation,
   useDeleteGroupMutation,
@@ -64,6 +66,7 @@ export const App = () => {
   const { data: groups = [], isLoading, dataUpdatedAt } = useGroupsQuery();
   const deleteGroup = useDeleteGroupMutation();
   const createGroup = useCreateGroupMutation();
+  const { togglePlay, isPlaying, isReady } = useSpotifyPlayer();
 
   const { width, containerRef, mounted } = useContainerWidth();
   const [layout, setLayout] = useState<Layout>([]);
@@ -164,24 +167,6 @@ export const App = () => {
     }
   }, [layout, user?.uid]);
 
-  // Handle cmd+n shortcut to create group
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "n" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        const groupNumber = (groups?.length ?? 0) + 1;
-        createGroup.mutate({
-          name: `Group ${groupNumber}`,
-          color: "blue",
-          order: groups?.length ?? 0,
-        });
-      }
-    };
-
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
-  }, [groups?.length, createGroup]);
-
   // Early return if not authenticated - prevents any effects from running
   // This is a safety check in case RequireAuth hasn't redirected yet
   if (authLoading || !isAuthed || !user?.uid) {
@@ -227,10 +212,15 @@ export const App = () => {
     setLayout(defaultLayout);
   };
 
-  const handleBringToTop = () => {
-    setLayout((currentLayout) =>
-      verticalCompactor.compact(currentLayout, GRID_COLS)
-    );
+  const handleToggleTheme = () => {
+    const isDark = document.documentElement.classList.contains("dark");
+    if (isDark) {
+      document.documentElement.classList.remove("dark");
+      window.localStorage.setItem("theme", "light");
+    } else {
+      document.documentElement.classList.add("dark");
+      window.localStorage.setItem("theme", "dark");
+    }
   };
 
   const handleDeleteGroup = (groupId: string) => {
@@ -251,7 +241,7 @@ export const App = () => {
     const groupNumber = (groups?.length ?? 0) + 1;
     await createGroup.mutateAsync({
       name: `Group ${groupNumber}`,
-      color: "blue",
+      color: "gray",
       order: groups?.length ?? 0,
     });
   };
@@ -272,7 +262,7 @@ export const App = () => {
         <CommandPalette
           onCreateGroup={handleCreateGroup}
           onResetLayout={handleResetLayout}
-          onCompact={handleBringToTop}
+          onToggleTheme={handleToggleTheme}
         />
         <Empty className="bg-muted/50 p-20 rounded-xl border w-auto max-w-2xl mx-auto">
           <EmptyHeader>
@@ -304,7 +294,7 @@ export const App = () => {
       <CommandPalette
         onCreateGroup={handleCreateGroup}
         onResetLayout={handleResetLayout}
-        onCompact={handleBringToTop}
+        onToggleTheme={handleToggleTheme}
       />
       <div className="flex flex-col space-y-6 py-4">
         {/* Page Header */}
@@ -317,10 +307,17 @@ export const App = () => {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button onClick={handleCreateGroup}>Create Group</Button>
-              <Button variant="outline" size="sm" onClick={handleBringToTop}>
-                <HugeiconsIcon icon={Upload03Icon} className="mr-1.5" />
-                <span>Compact</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={togglePlay}
+                disabled={!isReady}
+              >
+                <HugeiconsIcon
+                  icon={isPlaying ? PauseIcon : PlayIcon}
+                  className="mr-1.5"
+                />
+                <span>{isPlaying ? "Pause" : "Play"}</span>
               </Button>
               <Button variant="outline" size="sm" onClick={handleResetLayout}>
                 <HugeiconsIcon
@@ -328,6 +325,10 @@ export const App = () => {
                   className="mr-1.5"
                 />
                 <span>Reset layout</span>
+              </Button>
+              <Button onClick={handleCreateGroup}>
+                <HugeiconsIcon icon={Add01Icon} />
+                <span>Create Group</span>
               </Button>
             </div>
           </div>
