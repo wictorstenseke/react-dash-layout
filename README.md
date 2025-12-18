@@ -1,6 +1,6 @@
-# Spotify Music Organizer
+# Trackboard
 
-A customizable dashboard application for organizing your Spotify songs and playlists into themed groups. Connect to Spotify's web services to fetch your music library and organize tracks by themes, making it easy to find the right song at the right moment.
+A customizable dashboard application for organizing your Spotify tracks and playlists into themed groups. Connect to Spotify's web services to fetch your music library and organize tracks by themes, making it easy to find the right song at the right moment.
 
 ## 🎵 About
 
@@ -46,8 +46,7 @@ src/
 ├── pages/
 │   ├── Landing.tsx                 # Home page
 │   ├── Login.tsx                   # Authentication page
-│   ├── App.tsx                     # Main dashboard
-│   └── Example.tsx                 # Grid layout example
+│   └── App.tsx                     # Main dashboard
 ├── routes/                         # TanStack Router routes
 │   ├── __root.tsx                  # Root layout
 │   ├── index.tsx                   # / route

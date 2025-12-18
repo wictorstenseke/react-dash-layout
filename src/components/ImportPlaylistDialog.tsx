@@ -112,12 +112,12 @@ export const ImportPlaylistDialog = ({
           render={trigger ?? <Button size="sm">Import from Playlist</Button>}
         />
       )}
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg md:max-w-2xl w-full">
+        <DialogHeader className="min-w-0">
+          <DialogTitle className="truncate">
             {selectedPlaylist ? selectedPlaylist.name : "Import from Playlist"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="truncate">
             {selectedPlaylist
               ? `${tracksData?.items.length ?? 0} tracks in this playlist`
               : "Select a playlist to import tracks"}
@@ -125,19 +125,19 @@ export const ImportPlaylistDialog = ({
         </DialogHeader>
 
         {!selectedPlaylist ? (
-          <ScrollArea className="h-[400px] pr-4">
+          <ScrollArea className="h-[400px] pr-4 overflow-x-hidden">
             {loadingPlaylists ? (
               <div className="flex items-center justify-center p-8">
                 <p className="text-muted-foreground">Loading playlists…</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 {playlistsData?.items.map((playlist) => (
                   <button
                     key={playlist.id}
                     onClick={() => handlePlaylistSelect(playlist)}
                     className={cn(
-                      "flex w-full items-center gap-4 rounded-lg border p-3 text-left transition-colors",
+                      "flex w-full items-center gap-3 sm:gap-4 rounded-lg border p-2 sm:p-3 text-left transition-colors min-w-0",
                       "hover:bg-accent hover:text-accent-foreground"
                     )}
                   >
@@ -145,14 +145,16 @@ export const ImportPlaylistDialog = ({
                       <img
                         src={playlist.images[0].url}
                         alt={playlist.name}
-                        className="h-12 w-12 rounded object-cover"
+                        className="h-10 w-10 sm:h-12 sm:w-12 rounded object-cover shrink-0"
                       />
                     )}
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 overflow-hidden">
                       <p className="font-medium truncate">{playlist.name}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
                         {playlist.tracks.total} tracks · by{" "}
-                        {playlist.owner.display_name}
+                        <span className="truncate inline-block max-w-full">
+                          {playlist.owner.display_name}
+                        </span>
                       </p>
                     </div>
                   </button>
@@ -161,30 +163,32 @@ export const ImportPlaylistDialog = ({
             )}
           </ScrollArea>
         ) : (
-          <ScrollArea className="h-[400px] pr-4">
+          <ScrollArea className="h-[400px] pr-4 overflow-x-hidden">
             {loadingTracks ? (
               <div className="flex items-center justify-center p-8">
                 <p className="text-muted-foreground">Loading tracks…</p>
               </div>
             ) : (
-              <div className="space-y-1">
+              <div className="space-y-1 min-w-0">
                 {tracksData?.items.map((item, index) => (
                   <div
                     key={item.track.id}
-                    className="flex items-center gap-3 rounded p-2 text-sm"
+                    className="flex items-center gap-2 sm:gap-3 rounded p-2 text-sm min-w-0"
                   >
-                    <span className="text-muted-foreground w-8 text-right">
+                    <span className="text-muted-foreground w-6 sm:w-8 text-right shrink-0 text-xs sm:text-sm">
                       {index + 1}
                     </span>
                     {item.track.album.images?.[0]?.url && (
                       <img
                         src={item.track.album.images[0].url}
                         alt={item.track.name}
-                        className="h-10 w-10 rounded object-cover"
+                        className="h-8 w-8 sm:h-10 sm:w-10 rounded object-cover shrink-0"
                       />
                     )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{item.track.name}</p>
+                    <div className="flex-1 min-w-0 overflow-hidden">
+                      <p className="font-medium truncate text-xs sm:text-sm">
+                        {item.track.name}
+                      </p>
                       <p className="text-xs text-muted-foreground truncate">
                         {item.track.artists.map((a) => a.name).join(", ")}
                       </p>
@@ -211,10 +215,13 @@ export const ImportPlaylistDialog = ({
                 type="button"
                 onClick={handleImport}
                 disabled={importing || !tracksData}
+                className="truncate min-w-0"
               >
-                {importing
-                  ? "Importing…"
-                  : `Import ${tracksData?.items.length ?? 0} Tracks`}
+                <span className="truncate">
+                  {importing
+                    ? "Importing…"
+                    : `Import ${tracksData?.items.length ?? 0} Tracks`}
+                </span>
               </Button>
             </>
           ) : (
