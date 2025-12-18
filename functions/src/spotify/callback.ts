@@ -127,6 +127,11 @@ export const spotifyCallback = onRequest(
         tokens.access_token
       );
 
+      // Log product type for debugging (family plan members should still be "premium")
+      console.log(
+        `Spotify user product type: ${spotifyUser.product} for user ${spotifyUser.display_name}`
+      );
+
       // Store refresh token in secure collection
       const expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
       await db
@@ -143,6 +148,12 @@ export const spotifyCallback = onRequest(
         );
 
       // Update user document with Spotify link status
+      // Note: Family plan members should still have product === "premium"
+      const isPremium = spotifyUser.product === "premium";
+      console.log(
+        `Setting premium status to ${isPremium} for user ${spotifyUser.display_name}`
+      );
+
       await db
         .collection("users")
         .doc(uid)
@@ -152,7 +163,7 @@ export const spotifyCallback = onRequest(
               linked: true,
               linkedAt: FieldValue.serverTimestamp(),
               displayName: spotifyUser.display_name,
-              premium: spotifyUser.product === "premium",
+              premium: isPremium,
             },
           },
           { merge: true }

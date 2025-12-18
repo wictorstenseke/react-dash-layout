@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 import {
   DndContext,
   closestCenter,
@@ -32,7 +34,8 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { TRACK_COLORS } from "@/features/groups/types";
-import { useSpotifyPlayer } from "@/features/spotify/useSpotifyPlayer";
+import { usePlayback } from "@/features/playback/PlaybackProvider";
+import { useSpotifyPlayer } from "@/features/spotify/SpotifyPlayerProvider";
 import { cn } from "@/lib/utils";
 
 import type { GroupColor, Track, TrackColor } from "@/features/groups/types";
@@ -108,7 +111,26 @@ const SortableTrack = ({
     transition,
     isDragging,
   } = useSortable({ id: track.id });
-  const { play, isReady } = useSpotifyPlayer();
+  const { isReady } = useSpotifyPlayer();
+  const { selectTrack, playTrack, selectedTrackId, currentTrackId, isPlaying } =
+    usePlayback();
+
+  // Track pointer position to detect if it was a click (no movement) vs drag
+  const pointerDownRef = useRef<{ x: number; y: number; time: number } | null>(
+    null
+  );
+  const dragStartedRef = useRef(false);
+
+  // Track when drag actually starts
+  useEffect(() => {
+    if (isDragging) {
+      dragStartedRef.current = true;
+    } else {
+      // Reset when drag ends
+      dragStartedRef.current = false;
+      pointerDownRef.current = null;
+    }
+  }, [isDragging]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -124,9 +146,53 @@ const SortableTrack = ({
     onDelete?.(track.id);
   };
 
-  const handlePlay = () => {
+  const handlePointerDown = (e: React.PointerEvent) => {
+    pointerDownRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      time: Date.now(),
+    };
+    dragStartedRef.current = false;
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!pointerDownRef.current || dragStartedRef.current || isDragging) {
+      pointerDownRef.current = null;
+      return;
+    }
+
+    const deltaX = Math.abs(e.clientX - pointerDownRef.current.x);
+    const deltaY = Math.abs(e.clientY - pointerDownRef.current.y);
+    const deltaTime = Date.now() - pointerDownRef.current.time;
+    const moved = deltaX > 5 || deltaY > 5; // Allow small movement for click
+    const isQuickClick = deltaTime < 300; // Click should be quick
+
+    if (!moved && isQuickClick && track.spotifyTrackId && isReady) {
+      // Single click - select track
+      selectTrack(track.spotifyTrackId);
+    }
+
+    pointerDownRef.current = null;
+  };
+
+  const handleDoubleClick = () => {
+    if (track.spotifyTrackId && isReady && !isDragging) {
+      playTrack(track.spotifyTrackId);
+    }
+  };
+
+  // Handle pointer down for both drag and click detection
+  const handlePointerDownWithDrag = (e: React.PointerEvent) => {
+    handlePointerDown(e);
+    // Call original drag listener if it exists
+    if (listeners?.onPointerDown) {
+      listeners.onPointerDown(e);
+    }
+  };
+
+  const handleContextPlay = () => {
     if (track.spotifyTrackId && isReady) {
-      play(track.spotifyTrackId);
+      playTrack(track.spotifyTrackId);
     }
   };
 
@@ -135,6 +201,9 @@ const SortableTrack = ({
   };
 
   const canPlay = !!track.spotifyTrackId && isReady;
+  const isSelected = track.spotifyTrackId === selectedTrackId;
+  const isCurrentlyPlaying =
+    track.spotifyTrackId === currentTrackId && isPlaying;
 
   return (
     <ContextMenu>
@@ -144,19 +213,21 @@ const SortableTrack = ({
           style={style}
           {...attributes}
           {...listeners}
-          onClick={canPlay ? handlePlay : undefined}
+          onPointerDown={handlePointerDownWithDrag}
+          onPointerUp={canPlay ? handlePointerUp : undefined}
+          onDoubleClick={canPlay ? handleDoubleClick : undefined}
           className={cn(
             colorClasses[trackColor],
-            "group/track relative w-20 h-20 rounded-md flex items-center justify-center text-white font-semibold shadow-sm hover:shadow-md transition-shadow p-1",
-            isDragging
-              ? "cursor-grabbing"
-              : canPlay
-                ? "cursor-pointer hover:scale-105"
-                : "cursor-pointer"
+            "group/track relative w-20 h-20 rounded-md flex items-center justify-center text-white font-semibold shadow-sm hover:shadow-md transition-all p-1",
+            isDragging && "cursor-grabbing opacity-50",
+            !isDragging && canPlay && "cursor-pointer hover:scale-105",
+            !isDragging && !canPlay && "cursor-pointer",
+            (isSelected || isCurrentlyPlaying) && "ring-2 ring-white",
+            isSelected && !isCurrentlyPlaying && "brightness-75"
           )}
           title={
             canPlay
-              ? `Play: ${track.title || track.label}`
+              ? `${track.title || track.label}`
               : track.spotifyTrackId
                 ? "Player not ready"
                 : undefined
@@ -164,7 +235,7 @@ const SortableTrack = ({
           lang="en"
         >
           <span
-            className="text-xs text-center leading-tight overflow-hidden block"
+            className="text-xs text-center leading-tight overflow-hidden block relative z-10"
             style={{
               wordBreak: "break-word",
               overflowWrap: "break-word",
@@ -178,6 +249,15 @@ const SortableTrack = ({
           >
             {addHyphensToLongWords(track.label)}
           </span>
+          {isCurrentlyPlaying && (
+            <div className="absolute inset-0 bg-black/20 flex items-center justify-center rounded-md">
+              <HugeiconsIcon
+                icon={PlayIcon}
+                strokeWidth={2}
+                className="size-8 drop-shadow-lg"
+              />
+            </div>
+          )}
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
@@ -185,7 +265,7 @@ const SortableTrack = ({
           <ContextMenuItem
             onClick={(e) => {
               e.preventDefault();
-              handlePlay();
+              handleContextPlay();
             }}
           >
             <HugeiconsIcon icon={PlayIcon} strokeWidth={2} className="mr-2" />

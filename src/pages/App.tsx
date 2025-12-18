@@ -15,6 +15,7 @@ import ReactGridLayout, {
 
 import { CommandPalette } from "@/components/CommandPalette";
 import { GroupCard } from "@/components/GroupCard";
+import { PlayerStatus } from "@/components/PlayerStatus";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -26,7 +27,8 @@ import {
 } from "@/components/ui/empty";
 import { useCommandPalette } from "@/contexts/CommandPaletteContext";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { useSpotifyPlayer } from "@/features/spotify/useSpotifyPlayer";
+import { usePlayback } from "@/features/playback/PlaybackProvider";
+import { useSpotifyPlayer } from "@/features/spotify/SpotifyPlayerProvider";
 import {
   useCreateGroupMutation,
   useDeleteGroupMutation,
@@ -67,12 +69,40 @@ export const App = () => {
   const { data: groups = [], isLoading, dataUpdatedAt } = useGroupsQuery();
   const deleteGroup = useDeleteGroupMutation();
   const createGroup = useCreateGroupMutation();
-  const { togglePlay, isPlaying, isReady } = useSpotifyPlayer();
+  const { isReady } = useSpotifyPlayer();
+  const { togglePlayPause, isPlaying, selectedTrackId } = usePlayback();
   const { open, setOpen } = useCommandPalette();
 
   const { width, containerRef, mounted } = useContainerWidth();
   const [layout, setLayout] = useState<Layout>([]);
   const [isSquareDragging, setIsSquareDragging] = useState(false);
+
+  // Keyboard handler for Space key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if Space key and not in an input or text area
+      if (e.code === "Space" && document.activeElement) {
+        const tagName = document.activeElement.tagName.toLowerCase();
+        const isContentEditable =
+          document.activeElement.getAttribute("contenteditable") === "true";
+
+        // Don't handle if in input, textarea, or contenteditable element
+        if (
+          tagName === "input" ||
+          tagName === "textarea" ||
+          isContentEditable
+        ) {
+          return;
+        }
+
+        e.preventDefault();
+        togglePlayPause();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [togglePlayPause]);
 
   // Track previous group IDs to detect actual changes
   const prevGroupIdsRef = useRef<string>("");
@@ -313,11 +343,12 @@ export const App = () => {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <PlayerStatus />
               <Button
                 variant="outline"
                 size="sm"
-                onClick={togglePlay}
-                disabled={!isReady}
+                onClick={togglePlayPause}
+                disabled={!isReady || !selectedTrackId}
               >
                 <HugeiconsIcon
                   icon={isPlaying ? PauseIcon : PlayIcon}

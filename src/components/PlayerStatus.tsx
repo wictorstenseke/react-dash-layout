@@ -1,5 +1,7 @@
+import { useEffect, useRef } from "react";
+
+import { useSpotifyPlayer } from "@/features/spotify/SpotifyPlayerProvider";
 import { useSpotifyStatus } from "@/features/spotify/useSpotifyAuth";
-import { useSpotifyPlayer } from "@/features/spotify/useSpotifyPlayer";
 import { cn } from "@/lib/utils";
 
 type PlayerStatusProps = {
@@ -9,6 +11,31 @@ type PlayerStatusProps = {
 export const PlayerStatus = ({ className }: PlayerStatusProps) => {
   const { isLinked, isPremium } = useSpotifyStatus();
   const { playerState, isReady, currentTrack, error } = useSpotifyPlayer();
+
+  // Debug logging - only log state changes
+  const prevStateRef = useRef({
+    playerState,
+    isReady,
+    hasTrack: !!currentTrack,
+  });
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      import.meta.env.DEV &&
+      (prevStateRef.current.playerState !== playerState ||
+        prevStateRef.current.isReady !== isReady ||
+        prevStateRef.current.hasTrack !== !!currentTrack)
+    ) {
+      console.log("[PlayerStatus] State changed:", {
+        playerState,
+        isReady,
+        hasTrack: !!currentTrack,
+        error,
+        prev: prevStateRef.current,
+      });
+      prevStateRef.current = { playerState, isReady, hasTrack: !!currentTrack };
+    }
+  }, [playerState, isReady, currentTrack, error]);
 
   if (!isLinked) {
     return (
@@ -79,6 +106,7 @@ export const PlayerStatus = ({ className }: PlayerStatusProps) => {
           "flex items-center gap-2 rounded-lg border border-green-500/50 bg-green-500/10 px-3 py-2 text-sm",
           className
         )}
+        title="Audio plays through your system's default output device. Set AirPods as default in System Settings > Sound > Output"
       >
         <span className="h-2 w-2 rounded-full bg-green-500" />
         <span className="text-green-700 dark:text-green-400">

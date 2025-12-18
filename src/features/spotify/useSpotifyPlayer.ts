@@ -10,9 +10,10 @@ import { useSpotifyStatus, useSpotifyToken } from "./useSpotifyAuth";
 import type { PlayerState } from "./types";
 
 /**
- * Hook to manage Spotify Web Playback SDK
+ * Internal hook to manage Spotify Web Playback SDK
+ * Use SpotifyPlayerProvider and useSpotifyPlayer from SpotifyPlayerProvider.tsx instead
  */
-export const useSpotifyPlayer = () => {
+export const useSpotifyPlayerInternal = () => {
   const { user } = useAuth();
   const { isLinked, isPremium } = useSpotifyStatus();
   const { data: tokenData } = useSpotifyToken();
@@ -27,22 +28,39 @@ export const useSpotifyPlayer = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any | null>(null); // Spotify.Player
+  // Use ref to store token so getToken callback doesn't change when tokenData updates
+  const tokenDataRef = useRef(tokenData);
 
-  // Get valid access token
-  const getToken = useCallback(
-    (callback: (token: string) => void) => {
-      if (tokenData?.access_token) {
-        callback(tokenData.access_token);
-      }
-    },
-    [tokenData]
-  );
+  // Update ref when tokenData changes
+  useEffect(() => {
+    tokenDataRef.current = tokenData;
+  }, [tokenData]);
+
+  // Get valid access token - use ref to avoid recreating callback
+  const getToken = useCallback((callback: (token: string) => void) => {
+    if (tokenDataRef.current?.access_token) {
+      callback(tokenDataRef.current.access_token);
+    }
+  }, []); // No dependencies - uses ref instead
 
   // Initialize player
+  // Use access_token string as dependency instead of tokenData object to avoid re-runs when query object reference changes
+  const accessToken = tokenData?.access_token;
+  const initializedTokenRef = useRef<string | undefined>(undefined);
+
   useEffect(() => {
-    if (!isLinked || !isPremium || !tokenData || playerRef.current) {
+    // Only initialize if we have all requirements AND don't already have a player initialized with this token
+    if (!isLinked || !isPremium || !accessToken) {
       return;
     }
+
+    // If we already initialized with this exact token, don't re-initialize
+    if (initializedTokenRef.current === accessToken && playerRef.current) {
+      return;
+    }
+
+    // Mark that we're initializing with this token
+    initializedTokenRef.current = accessToken;
 
     // Wait for SDK to load
     const initPlayer = () => {
@@ -62,7 +80,11 @@ export const useSpotifyPlayer = () => {
       spotifyPlayer.addListener("ready", ({ device_id }) => {
         console.log("Ready with Device ID", device_id);
         setDeviceId(device_id);
-        setPlayerState("ready");
+        console.log("Setting playerState to 'ready'");
+        setPlayerState((prev) => {
+          console.log("[setPlayerState] prev:", prev, "-> ready");
+          return "ready";
+        });
         setError(null);
 
         // Save device ID to Firestore
@@ -147,7 +169,24 @@ export const useSpotifyPlayer = () => {
     }
 
     return () => {
-      // Clean up callback if it was set
+      // Only clean up if we're actually changing to a different token
+      // Check if the current token in the ref is different from what we initialized with
+      const currentToken = tokenDataRef.current?.access_token;
+
+      // If token hasn't changed, don't clean up - this prevents React StrictMode from breaking the player
+      if (currentToken === initializedTokenRef.current) {
+        // Token is the same - this is likely React StrictMode cleanup
+        // Don't disconnect the player or reset state
+        console.log(
+          "[useSpotifyPlayer cleanup] Token unchanged, skipping cleanup"
+        );
+        return; // Early return - don't disconnect the player
+      }
+
+      // Token changed, need to clean up and reinitialize
+      console.log(
+        "[useSpotifyPlayer cleanup] Token changed, cleaning up player"
+      );
       if (window.onSpotifyWebPlaybackSDKReady === initPlayer) {
         window.onSpotifyWebPlaybackSDKReady = undefined;
       }
@@ -159,8 +198,9 @@ export const useSpotifyPlayer = () => {
         setDeviceId(null);
         setPlayerState("idle");
       }
+      initializedTokenRef.current = undefined;
     };
-  }, [isLinked, isPremium, tokenData, getToken, user?.uid]);
+  }, [isLinked, isPremium, accessToken, user?.uid]); // Use accessToken string instead of tokenData object
 
   // Play track
   const play = useCallback(
@@ -173,6 +213,29 @@ export const useSpotifyPlayer = () => {
       try {
         // Use proxy endpoint instead of direct API call
         const { spotifyService } = await import("./spotifyService");
+
+        // First, transfer playback to this device (required for Web Playback SDK)
+        // This ensures the web player is the active device before playing
+        try {
+          await spotifyService.transferPlayback(deviceId);
+          // Small delay to ensure transfer completes
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        } catch (transferErr) {
+          // Transfer might fail if device is already active, that's okay
+          // But log it for debugging
+          const errorMessage =
+            transferErr instanceof Error
+              ? transferErr.message
+              : String(transferErr);
+          if (
+            !errorMessage.includes("already") &&
+            !errorMessage.includes("404")
+          ) {
+            console.warn("Transfer playback warning:", errorMessage);
+          }
+        }
+
+        // Then play the track
         await spotifyService.playTrack(spotifyTrackId, deviceId);
         setPlayerState("playing");
       } catch (err) {
@@ -220,6 +283,29 @@ export const useSpotifyPlayer = () => {
       setError(err instanceof Error ? err.message : "Failed to toggle play");
     }
   }, [player]);
+
+  // Debug logging - only log state changes, not every render
+  const prevStateRef = useRef({ playerState, deviceId });
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      import.meta.env.DEV &&
+      (prevStateRef.current.playerState !== playerState ||
+        prevStateRef.current.deviceId !== deviceId)
+    ) {
+      console.log("useSpotifyPlayer state changed:", {
+        playerState,
+        deviceId,
+        hasPlayer: !!player,
+        hasToken: !!tokenData,
+        isReady:
+          playerState === "ready" ||
+          playerState === "playing" ||
+          playerState === "paused",
+      });
+      prevStateRef.current = { playerState, deviceId };
+    }
+  }, [playerState, deviceId, player, tokenData]);
 
   return {
     player,

@@ -48,7 +48,19 @@ const fetchWithAuth = async <T>(
     throw new Error(error.message || `Request failed: ${response.status}`);
   }
 
-  return response.json();
+  // Handle 204 No Content responses (no body to parse)
+  if (response.status === 204 || response.status === 201) {
+    return undefined as T;
+  }
+
+  // Check if response has content to parse
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    const text = await response.text();
+    return text ? JSON.parse(text) : (undefined as T);
+  }
+
+  return undefined as T;
 };
 
 /**
@@ -139,6 +151,16 @@ export const spotifyService = {
     return fetchWithAuth<SpotifySearchResponse>(
       `/spotifySearchTracks?q=${encodedQuery}&limit=${limit}&offset=${offset}`
     );
+  },
+
+  /**
+   * Transfer playback to a device
+   */
+  transferPlayback: async (deviceId: string): Promise<void> => {
+    await fetchWithAuth<void>("/spotifyTransfer", {
+      method: "POST",
+      body: JSON.stringify({ deviceId }),
+    });
   },
 
   /**
