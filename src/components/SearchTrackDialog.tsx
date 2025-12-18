@@ -120,12 +120,12 @@ export const SearchTrackDialog = ({
           render={trigger ?? <Button size="sm">Search Track</Button>}
         />
       )}
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg md:max-w-2xl w-full">
+        <DialogHeader className="min-w-0">
+          <DialogTitle className="truncate">
             {selectedTrack ? "Add Track" : "Search Spotify"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="truncate">
             {selectedTrack
               ? "Customize the track label and color"
               : "Search for a track to add to this group"}
@@ -147,20 +147,20 @@ export const SearchTrackDialog = ({
               </div>
             </form>
 
-            <ScrollArea className="h-[400px] pr-4">
+            <ScrollArea className="h-[400px] pr-4 overflow-x-hidden">
               {searching ? (
                 <div className="flex items-center justify-center p-8">
                   <p className="text-muted-foreground">Searching…</p>
                 </div>
               ) : searchQuery ? (
                 searchResults?.tracks.items.length ? (
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     {searchResults.tracks.items.map((track) => (
                       <button
                         key={track.id}
                         onClick={() => handleTrackSelect(track)}
                         className={cn(
-                          "flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors",
+                          "flex w-full items-center gap-2 sm:gap-3 rounded-lg p-2 text-left transition-colors min-w-0",
                           "hover:bg-accent hover:text-accent-foreground"
                         )}
                       >
@@ -168,14 +168,21 @@ export const SearchTrackDialog = ({
                           <img
                             src={track.album.images[0].url}
                             alt={track.name}
-                            className="h-12 w-12 rounded object-cover"
+                            className="h-10 w-10 sm:h-12 sm:w-12 rounded object-cover shrink-0"
                           />
                         )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{track.name}</p>
-                          <p className="text-sm text-muted-foreground truncate">
-                            {track.artists.map((a) => a.name).join(", ")} ·{" "}
-                            {track.album.name}
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <p className="font-medium truncate text-sm sm:text-base">
+                            {track.name}
+                          </p>
+                          <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                            <span className="truncate inline-block max-w-full">
+                              {track.artists.map((a) => a.name).join(", ")}
+                            </span>
+                            {" · "}
+                            <span className="truncate inline-block max-w-full">
+                              {track.album.name}
+                            </span>
                           </p>
                         </div>
                       </button>
@@ -196,18 +203,20 @@ export const SearchTrackDialog = ({
             </ScrollArea>
           </>
         ) : (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 rounded-lg border p-3">
+          <div className="space-y-4 min-w-0">
+            <div className="flex items-center gap-2 sm:gap-3 rounded-lg border p-2 sm:p-3 min-w-0">
               {selectedTrack.album.images[0]?.url && (
                 <img
                   src={selectedTrack.album.images[0].url}
                   alt={selectedTrack.name}
-                  className="h-16 w-16 rounded object-cover"
+                  className="h-12 w-12 sm:h-16 sm:w-16 rounded object-cover shrink-0"
                 />
               )}
-              <div className="flex-1 min-w-0">
-                <p className="font-medium">{selectedTrack.name}</p>
-                <p className="text-sm text-muted-foreground">
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <p className="font-medium truncate text-sm sm:text-base">
+                  {selectedTrack.name}
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">
                   {selectedTrack.artists.map((a) => a.name).join(", ")}
                 </p>
               </div>
@@ -223,7 +232,7 @@ export const SearchTrackDialog = ({
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 min-w-0">
               <Label>Color</Label>
               <div className="flex flex-wrap gap-2">
                 {TRACK_COLORS.map((c) => (
@@ -232,7 +241,7 @@ export const SearchTrackDialog = ({
                     type="button"
                     onClick={() => setColor(c)}
                     className={cn(
-                      "h-8 w-8 rounded-full transition-all",
+                      "h-8 w-8 rounded-full transition-all shrink-0",
                       colorClasses[c].bg,
                       color === c
                         ? `ring-2 ${colorClasses[c].ring} ring-offset-2 ring-offset-background`

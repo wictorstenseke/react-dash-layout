@@ -30,6 +30,10 @@ export const useSpotifyPlayerInternal = () => {
   const playerRef = useRef<any | null>(null); // Spotify.Player
   // Use ref to store token so getToken callback doesn't change when tokenData updates
   const tokenDataRef = useRef(tokenData);
+  // Store target volume for fade in/out (default 0.5)
+  const targetVolumeRef = useRef<number>(0.5);
+  // Track active fade animation to prevent overlapping fades
+  const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update ref when tokenData changes
   useEffect(() => {
@@ -191,6 +195,12 @@ export const useSpotifyPlayerInternal = () => {
         window.onSpotifyWebPlaybackSDKReady = undefined;
       }
 
+      // Clear any active fade animation
+      if (fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+        fadeIntervalRef.current = null;
+      }
+
       if (playerRef.current) {
         playerRef.current.disconnect();
         playerRef.current = null;
@@ -202,10 +212,63 @@ export const useSpotifyPlayerInternal = () => {
     };
   }, [isLinked, isPremium, accessToken, user?.uid]); // Use accessToken string instead of tokenData object
 
+  // Fade volume utility function
+  const fadeVolume = useCallback(
+    async (
+      playerInstance: any,
+      fromVolume: number,
+      toVolume: number,
+      durationMs: number = 1000
+    ): Promise<void> => {
+      // Clear any existing fade
+      if (fadeIntervalRef.current) {
+        clearInterval(fadeIntervalRef.current);
+        fadeIntervalRef.current = null;
+      }
+
+      return new Promise((resolve) => {
+        const startTime = Date.now();
+        const volumeDiff = toVolume - fromVolume;
+
+        const updateVolume = async () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / durationMs, 1);
+
+          // Use easing function for smoother fade (ease-in-out)
+          const easedProgress =
+            progress < 0.5
+              ? 2 * progress * progress
+              : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+          const currentVolume = fromVolume + volumeDiff * easedProgress;
+
+          try {
+            await playerInstance.setVolume(currentVolume);
+          } catch (err) {
+            console.error("Error setting volume during fade:", err);
+          }
+
+          if (progress >= 1) {
+            if (fadeIntervalRef.current) {
+              clearInterval(fadeIntervalRef.current);
+              fadeIntervalRef.current = null;
+            }
+            resolve();
+          }
+        };
+
+        // Update volume every ~16ms (60fps)
+        fadeIntervalRef.current = setInterval(updateVolume, 16);
+        updateVolume(); // Initial call
+      });
+    },
+    []
+  );
+
   // Play track
   const play = useCallback(
     async (spotifyTrackId: string) => {
-      if (!deviceId) {
+      if (!deviceId || !player) {
         setError("Player not ready");
         return;
       }
@@ -235,15 +298,38 @@ export const useSpotifyPlayerInternal = () => {
           }
         }
 
+        // Get current volume to use as target for fade in
+        let targetVolume = targetVolumeRef.current;
+        try {
+          const currentVolume = await player.getVolume();
+          if (currentVolume > 0) {
+            targetVolume = currentVolume;
+            targetVolumeRef.current = targetVolume;
+          }
+        } catch (err) {
+          // If getVolume fails, use stored target volume
+          console.warn("Could not get current volume, using stored:", err);
+        }
+
+        // Set volume to 0 before playing for fade in
+        try {
+          await player.setVolume(0);
+        } catch (err) {
+          console.warn("Could not set volume to 0:", err);
+        }
+
         // Then play the track
         await spotifyService.playTrack(spotifyTrackId, deviceId);
         setPlayerState("playing");
+
+        // Fade in from 0 to target volume over 1 second
+        await fadeVolume(player, 0, targetVolume, 1000);
       } catch (err) {
         console.error("Play error:", err);
         setError(err instanceof Error ? err.message : "Failed to play track");
       }
     },
-    [deviceId]
+    [deviceId, player, fadeVolume]
   );
 
   // Pause
@@ -251,26 +337,56 @@ export const useSpotifyPlayerInternal = () => {
     if (!player) return;
 
     try {
+      // Get current volume before fading out
+      let currentVolume = targetVolumeRef.current;
+      try {
+        const volume = await player.getVolume();
+        if (volume > 0) {
+          currentVolume = volume;
+          targetVolumeRef.current = currentVolume; // Store for next fade in
+        }
+      } catch (err) {
+        console.warn("Could not get current volume:", err);
+      }
+
+      // Fade out from current volume to 0 over 1 second
+      await fadeVolume(player, currentVolume, 0, 1000);
+
+      // Then pause
       await player.pause();
       setPlayerState("paused");
     } catch (err) {
       console.error("Pause error:", err);
       setError(err instanceof Error ? err.message : "Failed to pause");
     }
-  }, [player]);
+  }, [player, fadeVolume]);
 
   // Resume
   const resume = useCallback(async () => {
     if (!player) return;
 
     try {
+      // Get target volume for fade in
+      const targetVolume = targetVolumeRef.current;
+
+      // Set volume to 0 before resuming for fade in
+      try {
+        await player.setVolume(0);
+      } catch (err) {
+        console.warn("Could not set volume to 0:", err);
+      }
+
+      // Resume playback
       await player.resume();
       setPlayerState("playing");
+
+      // Fade in from 0 to target volume over 1 second
+      await fadeVolume(player, 0, targetVolume, 1000);
     } catch (err) {
       console.error("Resume error:", err);
       setError(err instanceof Error ? err.message : "Failed to resume");
     }
-  }, [player]);
+  }, [player, fadeVolume]);
 
   // Toggle play/pause
   const togglePlay = useCallback(async () => {
