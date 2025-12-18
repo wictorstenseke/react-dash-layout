@@ -22,3 +22,16 @@ alwaysApply: true
 - DO NOT leave TODO comments, placeholders, or incomplete implementations
 - DO NOT guess when uncertain — ask or state limitations
 - Verify code is complete and fully functional before finishing
+
+## Documentation Organization
+
+- **`/docs/`** - Place versioned, project documentation here (committed to git):
+  - Architecture summaries and integration guides
+  - Public-facing documentation for developers
+  - Guides that should be part of the repository
+
+- **`/.xcell/`** - Place local-only documentation here (gitignored):
+  - Debugging guides and troubleshooting steps
+  - Verification checklists and setup instructions
+  - AI conversation context and temporary notes
+  - Personal development notes not needed in the repo

@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 
 import { Link, useNavigate } from "@tanstack/react-router";
 
+import { PlayerStatus } from "@/components/PlayerStatus";
+import { SpotifyConnectButton } from "@/components/SpotifyConnectButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/AuthProvider";
@@ -74,6 +76,12 @@ export function AppShell({ children }: AppShellProps) {
             </nav>
           </div>
           <div className="flex items-center gap-2">
+            {!loading && isAuthed && (
+              <>
+                <SpotifyConnectButton variant="outline" size="sm" />
+                <PlayerStatus />
+              </>
+            )}
             <ThemeToggle />
             {!loading && isAuthed && (
               <Button

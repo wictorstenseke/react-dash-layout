@@ -17,6 +17,11 @@ service cloud.firestore {
       }
     }
 
+    // Server-only token storage - NO client access
+    match /spotifyTokens/{userId} {
+      allow read, write: if false;
+    }
+
     // Deny all other access by default
     match /{document=**} {
       allow read, write: if false;

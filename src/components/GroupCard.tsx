@@ -2,10 +2,14 @@ import {
   DragDropHorizontalIcon,
   Delete02Icon,
   SquareArrowDiagonal02Icon,
+  Upload03Icon,
+  Search01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { AddTrackDialog } from "@/components/AddTrackDialog";
+import { ImportPlaylistDialog } from "@/components/ImportPlaylistDialog";
+import { SearchTrackDialog } from "@/components/SearchTrackDialog";
 import { SortableTracks } from "@/components/SortableTracks";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -119,6 +123,30 @@ export const GroupCard = ({
               trigger={
                 <Button variant="ghost" size="icon-sm">
                   <span className="text-lg leading-none">+</span>
+                </Button>
+              }
+            />
+            <SearchTrackDialog
+              groupId={group.id}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  title="Search Spotify track"
+                >
+                  <HugeiconsIcon icon={Search01Icon} className="size-4" />
+                </Button>
+              }
+            />
+            <ImportPlaylistDialog
+              groupId={group.id}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  title="Import from playlist"
+                >
+                  <HugeiconsIcon icon={Upload03Icon} className="size-4" />
                 </Button>
               }
             />

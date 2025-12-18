@@ -33,3 +33,6 @@ routeTree.gen.ts
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+
+# Local notes (not committed)
+.xcell/
