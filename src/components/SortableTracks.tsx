@@ -170,8 +170,8 @@ const SortableTrack = ({
             isDragging && "cursor-grabbing opacity-50",
             !isDragging && canPlay && "cursor-pointer hover:scale-105",
             !isDragging && !canPlay && "cursor-pointer",
-            isSelected && "ring-2 ring-white brightness-75",
-            isCurrentlyPlaying && "ring-2 ring-white"
+            (isSelected || isCurrentlyPlaying) && "ring-2 ring-white",
+            isSelected && !isCurrentlyPlaying && "brightness-75"
           )}
           title={
             canPlay
