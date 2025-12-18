@@ -284,6 +284,21 @@ export const useSpotifyPlayerInternal = () => {
     }
   }, [player]);
 
+  // Seek to position
+  const seek = useCallback(
+    async (positionMs: number) => {
+      if (!player) return;
+
+      try {
+        await player.seek(positionMs);
+      } catch (err) {
+        console.error("Seek error:", err);
+        setError(err instanceof Error ? err.message : "Failed to seek");
+      }
+    },
+    [player]
+  );
+
   // Debug logging - only log state changes, not every render
   const prevStateRef = useRef({ playerState, deviceId });
   useEffect(() => {
@@ -324,5 +339,6 @@ export const useSpotifyPlayerInternal = () => {
     pause,
     resume,
     togglePlay,
+    seek,
   };
 };

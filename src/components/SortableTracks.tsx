@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   DndContext,
@@ -17,12 +17,14 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   PaintBoardIcon,
+  PencilEdit02Icon,
   PlayIcon,
   RemoveSquareIcon,
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
+import { EditTrackDialog } from "@/components/EditTrackDialog";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -93,6 +95,7 @@ const addHyphensToLongWords = (text: string, maxLength = 8): string => {
 type SortableTrackProps = {
   track: Track;
   defaultColor: TrackColor;
+  groupId: string;
   onDelete?: (trackId: string) => void;
   onUpdateColor?: (trackId: string, color: TrackColor) => void;
 };
@@ -100,9 +103,11 @@ type SortableTrackProps = {
 const SortableTrack = ({
   track,
   defaultColor,
+  groupId,
   onDelete,
   onUpdateColor,
 }: SortableTrackProps) => {
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const {
     attributes,
     listeners,
@@ -177,7 +182,7 @@ const SortableTrack = ({
 
   const handleDoubleClick = () => {
     if (track.spotifyTrackId && isReady && !isDragging) {
-      playTrack(track.spotifyTrackId);
+      playTrack(track.spotifyTrackId, track.startTimeMs);
     }
   };
 
@@ -192,7 +197,7 @@ const SortableTrack = ({
 
   const handleContextPlay = () => {
     if (track.spotifyTrackId && isReady) {
-      playTrack(track.spotifyTrackId);
+      playTrack(track.spotifyTrackId, track.startTimeMs);
     }
   };
 
@@ -267,12 +272,28 @@ const SortableTrack = ({
               e.preventDefault();
               handleContextPlay();
             }}
+            className="gap-0"
           >
             <HugeiconsIcon icon={PlayIcon} strokeWidth={2} className="mr-2" />
             <span>Play</span>
           </ContextMenuItem>
         )}
-        {canPlay && (onUpdateColor || onDelete) && <ContextMenuSeparator />}
+        {(onUpdateColor || onDelete) && <ContextMenuSeparator />}
+        <ContextMenuItem
+          onClick={(e) => {
+            e.preventDefault();
+            setEditDialogOpen(true);
+          }}
+          className="gap-0"
+        >
+          <HugeiconsIcon
+            icon={PencilEdit02Icon}
+            strokeWidth={2}
+            className="mr-2"
+          />
+          <span>Set starttime</span>
+        </ContextMenuItem>
+        {(onUpdateColor || onDelete) && <ContextMenuSeparator />}
         {onUpdateColor && (
           <ContextMenuSub>
             <ContextMenuSubTrigger>
@@ -329,6 +350,12 @@ const SortableTrack = ({
           </>
         )}
       </ContextMenuContent>
+      <EditTrackDialog
+        groupId={groupId}
+        track={track}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
     </ContextMenu>
   );
 };
@@ -408,6 +435,7 @@ export const SortableTracks = ({
               key={`${groupId}-${track.id}-${index}`}
               track={track}
               defaultColor={defaultTrackColor}
+              groupId={groupId}
               onDelete={onDelete}
               onUpdateColor={onUpdateColor}
             />

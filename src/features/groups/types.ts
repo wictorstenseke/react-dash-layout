@@ -63,6 +63,7 @@ export type Track = {
   artists?: string[]; // Artist names
   albumImageUrl?: string; // Album art URL
   durationMs?: number; // Track duration
+  startTimeMs?: number; // Start time offset in milliseconds (for skipping intro/starting at specific point)
   origin?: {
     // How track was added
     type: "manual" | "playlist";
@@ -79,6 +80,7 @@ export type CreateTrackInput = {
   artists?: string[];
   albumImageUrl?: string;
   durationMs?: number;
+  startTimeMs?: number;
   origin?: {
     type: "manual" | "playlist";
     playlistId?: string;
