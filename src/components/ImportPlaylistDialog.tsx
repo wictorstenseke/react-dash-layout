@@ -24,13 +24,19 @@ import type { SpotifyPlaylist } from "@/features/spotify/types";
 type ImportPlaylistDialogProps = {
   groupId: string;
   trigger?: React.ReactElement;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 export const ImportPlaylistDialog = ({
   groupId,
   trigger,
+  open: controlledOpen,
+  onOpenChange,
 }: ImportPlaylistDialogProps) => {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [selectedPlaylist, setSelectedPlaylist] =
     useState<SpotifyPlaylist | null>(null);
   const [importing, setImporting] = useState(false);
@@ -101,9 +107,11 @@ export const ImportPlaylistDialog = ({
         }
       }}
     >
-      <DialogTrigger
-        render={trigger ?? <Button size="sm">Import from Playlist</Button>}
-      />
+      {trigger && (
+        <DialogTrigger
+          render={trigger ?? <Button size="sm">Import from Playlist</Button>}
+        />
+      )}
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>

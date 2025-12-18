@@ -1,19 +1,16 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GROUP_COLORS, type GroupColor } from "@/features/groups/types";
-import { useCreateGroupMutation, useGroupsQuery } from "@/hooks/useGroups";
+import { useUpdateGroupMutation } from "@/hooks/useGroups";
 import { cn } from "@/lib/utils";
 
 const colorClasses: Record<GroupColor, { bg: string; ring: string }> = {
@@ -30,60 +27,58 @@ const colorClasses: Record<GroupColor, { bg: string; ring: string }> = {
   yellow: { bg: "bg-yellow-500", ring: "ring-yellow-500" },
 };
 
-type CreateGroupDialogProps = {
-  trigger?: React.ReactElement;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+type EditGroupDialogProps = {
+  groupId: string;
+  currentName: string;
+  currentColor: GroupColor;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
-export const CreateGroupDialog = ({
-  trigger,
-  open: controlledOpen,
+export const EditGroupDialog = ({
+  groupId,
+  currentName,
+  currentColor,
+  open,
   onOpenChange,
-}: CreateGroupDialogProps) => {
-  const [internalOpen, setInternalOpen] = useState(false);
-  const open = controlledOpen ?? internalOpen;
-  const setOpen = onOpenChange ?? setInternalOpen;
-  const [name, setName] = useState("");
-  const [color, setColor] = useState<GroupColor>("gray");
+}: EditGroupDialogProps) => {
+  const [name, setName] = useState(currentName);
+  const [color, setColor] = useState<GroupColor>(currentColor);
+  const updateGroup = useUpdateGroupMutation();
 
-  const { data: groups } = useGroupsQuery();
-  const createGroup = useCreateGroupMutation();
+  // Reset form when dialog opens with new values
+  useEffect(() => {
+    if (open) {
+      setName(currentName);
+      setColor(currentColor);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
     if (!name.trim()) return;
 
-    const order = groups?.length ?? 0;
-
-    await createGroup.mutateAsync({
-      name: name.trim(),
-      color,
-      order,
+    await updateGroup.mutateAsync({
+      groupId,
+      data: {
+        name: name.trim(),
+        color,
+      },
     });
 
-    // Reset form and close
-    setName("");
-    setColor("gray");
-    setOpen(false);
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={trigger ?? <Button>Create Group</Button>} />
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create New Group</DialogTitle>
-          <DialogDescription>
-            Create a group to organize your tracks. Give it a name and pick a
-            color.
-          </DialogDescription>
-        </DialogHeader>
+        <DialogHeader></DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="group-name">Group Name</Label>
+            <Label htmlFor="group-name">Name</Label>
             <Input
               id="group-name"
               placeholder="e.g., Warm Up, Set 1, Chill"
@@ -118,15 +113,15 @@ export const CreateGroupDialog = ({
             <Button
               type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={() => onOpenChange(false)}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={!name.trim() || createGroup.isPending}
+              disabled={!name.trim() || updateGroup.isPending}
             >
-              {createGroup.isPending ? "Creating…" : "Create Group"}
+              {updateGroup.isPending ? "Saving…" : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>

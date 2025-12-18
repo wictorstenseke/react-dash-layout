@@ -1,13 +1,11 @@
 import type { ReactNode } from "react";
 
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 
-import { PlayerStatus } from "@/components/PlayerStatus";
+import { ProfileMenu } from "@/components/ProfileMenu";
 import { SpotifyConnectButton } from "@/components/SpotifyConnectButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { signOutUser } from "@/features/auth/authService";
 
 interface AppShellProps {
   children: ReactNode;
@@ -15,21 +13,14 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const { isAuthed, loading } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    const result = await signOutUser();
-    if (result.success) {
-      navigate({ to: "/login" });
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="container mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="mr-4 flex">
+        <div className="container mx-auto grid h-14 max-w-screen-2xl grid-cols-3 items-center px-4 sm:px-6 lg:px-8">
+          {/* Left: Logo + Nav */}
+          <div className="flex">
             <Link
               to="/"
               className="mr-6 flex items-center justify-center rounded-md p-1.5 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
@@ -75,24 +66,15 @@ export function AppShell({ children }: AppShellProps) {
               </Link>
             </nav>
           </div>
-          <div className="flex items-center gap-2">
+          {/* Center: SpotifyConnectButton */}
+          <div className="flex items-center justify-center">
             {!loading && isAuthed && (
-              <>
-                <SpotifyConnectButton variant="outline" size="sm" />
-                <PlayerStatus />
-              </>
+              <SpotifyConnectButton variant="outline" size="sm" />
             )}
-            <ThemeToggle />
-            {!loading && isAuthed && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSignOut}
-                className="text-sm"
-              >
-                Sign out
-              </Button>
-            )}
+          </div>
+          {/* Right: ProfileMenu or ThemeToggle */}
+          <div className="flex items-center justify-end gap-2">
+            {!loading && isAuthed ? <ProfileMenu /> : <ThemeToggle />}
           </div>
         </div>
       </header>
