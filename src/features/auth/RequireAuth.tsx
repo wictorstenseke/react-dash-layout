@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
-import { Navigate, useLocation } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 
 import { useAuth } from "./AuthProvider";
 
@@ -17,6 +17,25 @@ type RequireAuthProps = {
 export const RequireAuth = ({ children }: RequireAuthProps) => {
   const { isAuthed, loading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const hasRedirectedRef = useRef(false);
+
+  // Use effect to handle navigation to prevent loops
+  useEffect(() => {
+    if (!loading && !isAuthed && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
+      const currentHref = location.href;
+      const searchParams =
+        currentHref !== "/" ? { next: currentHref } : undefined;
+
+      navigate({
+        to: "/login",
+        search: searchParams,
+        replace: true, // Use replace to avoid adding to history
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthed, loading]);
 
   if (loading) {
     return (
@@ -27,12 +46,13 @@ export const RequireAuth = ({ children }: RequireAuthProps) => {
   }
 
   if (!isAuthed) {
-    // Store the intended destination (including search/hash) in the ?next= param
-    const currentHref = location.href;
-    const searchParams =
-      currentHref !== "/" ? { next: currentHref } : undefined;
+    // Return null while redirecting to prevent rendering children
+    return null;
+  }
 
-    return <Navigate to="/login" search={searchParams} />;
+  // Reset redirect flag when authenticated
+  if (hasRedirectedRef.current && isAuthed) {
+    hasRedirectedRef.current = false;
   }
 
   return <>{children}</>;

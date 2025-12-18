@@ -47,16 +47,28 @@ const saveLayout = (uid: string, layout: Layout) => {
  * Protected app page - main dashboard with groups and tracks
  */
 export const App = () => {
-  const { user } = useAuth();
-  const { data: groups = [], isLoading } = useGroupsQuery();
+  const { user, loading: authLoading, isAuthed } = useAuth();
+  const { data: groups = [], isLoading, dataUpdatedAt } = useGroupsQuery();
   const deleteGroup = useDeleteGroupMutation();
 
   const { width, containerRef, mounted } = useContainerWidth();
   const [layout, setLayout] = useState<Layout>([]);
   const [isSquareDragging, setIsSquareDragging] = useState(false);
 
+  // Early return if not authenticated - prevents any effects from running
+  // This is a safety check in case RequireAuth hasn't redirected yet
+  if (authLoading || !isAuthed || !user?.uid) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
+
   // Track previous group IDs to detect actual changes
   const prevGroupIdsRef = useRef<string>("");
+  // Track previous dataUpdatedAt to prevent unnecessary re-runs
+  const prevDataUpdatedAtRef = useRef<number | undefined>(undefined);
   // Flag to skip onLayoutChange when we programmatically set the layout
   const skipNextLayoutChangeRef = useRef(false);
 
@@ -90,7 +102,33 @@ export const App = () => {
 
   // Sync layout when user or groups change
   useEffect(() => {
-    if (!user?.uid || groups.length === 0) {
+    // Early return if no user - don't process layout or update state
+    // This prevents any state updates that could trigger re-renders
+    if (!user?.uid || !isAuthed) {
+      // Only clear layout if it's not already empty to avoid unnecessary updates
+      if (layout.length > 0) {
+        setLayout([]);
+      }
+      prevGroupIdsRef.current = "";
+      prevDataUpdatedAtRef.current = undefined;
+      return;
+    }
+
+    // If query is disabled or dataUpdatedAt is undefined, don't proceed
+    // This prevents infinite loops when navigating while not authenticated
+    if (dataUpdatedAt === undefined) {
+      return;
+    }
+
+    // Only proceed if dataUpdatedAt has actually changed
+    // This prevents re-running when the same data is returned
+    if (dataUpdatedAt === prevDataUpdatedAtRef.current) {
+      return;
+    }
+    prevDataUpdatedAtRef.current = dataUpdatedAt;
+
+    // If no groups, clear layout
+    if (groups.length === 0) {
       setLayout((current) => (current.length > 0 ? [] : current));
       prevGroupIdsRef.current = "";
       return;
@@ -106,7 +144,8 @@ export const App = () => {
     const newLayout = computeLayout(groups, user.uid);
     skipNextLayoutChangeRef.current = true;
     setLayout(newLayout);
-  }, [user?.uid, groups]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, dataUpdatedAt]);
 
   // Save layout when it changes (but not on initial load)
   const isInitialMountRef = useRef(true);

@@ -15,6 +15,7 @@ This application allows you to:
 
 - **React 19** - UI library with TypeScript
 - **Vite (Rolldown)** - Fast build tool with Rust-based bundler
+- **Firebase** - Authentication, Firestore database, and Cloud Functions
 - **TanStack Router** - Type-safe file-based routing
 - **TanStack Query** - Data fetching and caching for API calls
 - **Tailwind CSS v4** - Utility-first styling
@@ -30,27 +31,46 @@ This application allows you to:
 src/
 ├── components/
 │   ├── layout/
-│   │   └── AppShell.tsx      # Main layout wrapper
-│   ├── SortableSquares.tsx   # Sortable items component
-│   └── ui/                    # shadcn/ui components
+│   │   └── AppShell.tsx            # Main layout wrapper
+│   ├── SpotifyConnectButton.tsx    # Spotify OAuth connection
+│   ├── ImportPlaylistDialog.tsx    # Import Spotify playlists
+│   ├── SearchTrackDialog.tsx       # Search and add tracks
+│   ├── PlayerStatus.tsx            # Spotify player status
+│   ├── GroupCard.tsx               # Group display component
+│   ├── SortableTracks.tsx          # Sortable track items
+│   └── ui/                         # shadcn/ui components
+├── features/
+│   ├── auth/                       # Firebase Authentication
+│   ├── groups/                     # Groups and tracks management
+│   └── spotify/                    # Spotify integration hooks & services
 ├── pages/
-│   ├── Landing.tsx            # Home page
-│   └── Example.tsx            # Dashboard example page
-├── routes/                    # TanStack Router routes
-│   ├── __root.tsx             # Root layout
-│   ├── index.tsx              # / route
-│   └── example.tsx            # /example route
+│   ├── Landing.tsx                 # Home page
+│   ├── Login.tsx                   # Authentication page
+│   ├── App.tsx                     # Main dashboard
+│   └── Example.tsx                 # Grid layout example
+├── routes/                         # TanStack Router routes
+│   ├── __root.tsx                  # Root layout
+│   ├── index.tsx                   # / route
+│   ├── login.tsx                   # /login route
+│   └── app.tsx                     # /app route
 ├── hooks/
-│   └── usePosts.ts            # Query hooks
+│   ├── useGroups.ts                # Groups data hooks
+│   └── useTracks.ts                # Tracks data hooks
 ├── lib/
-│   ├── api.ts                 # API client with fetch wrapper
-│   ├── queryClient.ts         # TanStack Query configuration
-│   └── utils.ts               # Utility functions
+│   ├── firebase.ts                 # Firebase configuration
+│   ├── queryClient.ts              # TanStack Query configuration
+│   └── utils.ts                    # Utility functions
 ├── types/
-│   └── api.ts                 # API type definitions
-├── router.tsx                 # Router configuration
-├── main.tsx                   # App entry point
-└── index.css                  # Global styles
+│   └── spotify-web-playback.d.ts   # Spotify SDK types
+├── router.tsx                      # Router configuration
+├── main.tsx                        # App entry point
+└── index.css                       # Global styles
+
+functions/                          # Firebase Cloud Functions
+├── src/
+│   ├── spotify/                    # Spotify OAuth & API proxy endpoints
+│   └── utils/                      # Shared utilities
+└── package.json
 ```
 
 ## 🚀 Getting Started
@@ -59,6 +79,7 @@ src/
 
 - Node.js (v18 or higher)
 - npm or yarn
+- Firebase CLI (`npm install -g firebase-tools`)
 - Spotify Developer Account (for API access)
 
 ### Installation
@@ -74,19 +95,61 @@ cd react-dash-layout
 
 ```bash
 npm install
+cd functions && npm install && cd ..
 ```
 
-3. Set up Spotify API credentials:
-   - Create a Spotify app at [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-   - Add your client ID and redirect URI to environment variables
+3. Set up environment variables:
+   - Create `functions/.env` file:
+     ```bash
+     SPOTIFY_CLIENT_ID=your_spotify_client_id_here
+     FUNCTIONS_EMULATOR=true
+     FRONTEND_URL=http://localhost:5173
+     ```
+   - Create `.env.local` in project root (see `.env.local.example` for template)
 
-4. Start the development server:
+4. Build Firebase Functions:
+
+```bash
+cd functions
+npm run build
+cd ..
+```
+
+### Local Development with Firebase Emulators
+
+This application requires Firebase emulators to run locally for authentication, Firestore, and Cloud Functions.
+
+1. **Start Firebase Emulators** (in a separate terminal):
+
+```bash
+firebase emulators:start
+```
+
+This will automatically start all configured emulators:
+
+- Auth emulator at `http://127.0.0.1:9099`
+- Functions emulator at `http://127.0.0.1:5001`
+- Firestore emulator at `http://127.0.0.1:8080`
+- Emulator UI at `http://localhost:4000`
+
+**Keep this terminal open** - emulators must stay running while developing.
+
+2. **Start Development Server** (in another terminal):
 
 ```bash
 npm run dev
 ```
 
-5. Build for production:
+3. **Create a Test Account**:
+
+Since you're using the Auth emulator, create an account:
+
+- Go to `http://localhost:5173/login` and sign up, or
+- Use the Emulator UI at `http://localhost:4000` → Authentication tab → Add user
+
+**Note:** Emulator data is temporary and resets when you stop the emulators.
+
+### Production Build
 
 ```bash
 npm run build
@@ -94,65 +157,13 @@ npm run build
 
 ## 📝 Available Scripts
 
-### Development
+- `npm run dev` - Start development server
+- `npm run build` - Production build
+- `npm run test` - Run tests
+- `npm run lint` - Check code quality
+- `npm run type-check` - TypeScript type checking
 
-- `npm run dev` - Start dev server with hot reload
-
-### Building
-
-- `npm run build` - Full production build (runs type-check, lint, test, then builds)
-- `npm run preview` - Preview production build locally
-
-### Type Checking & Linting
-
-- `npm run generate:routes` - Generate TanStack Router route tree (auto-run by type-check)
-- `npm run type-check` - Run TypeScript type checking (generates routes first)
-- `npm run lint` - Check code with ESLint
-- `npm run lint:fix` - Fix ESLint issues automatically
-- `npm run format` - Format all files with Prettier
-- `npm run format:check` - Check if files are formatted correctly
-
-### Testing
-
-- `npm run test` - Run tests once
-- `npm run test:watch` - Run tests in watch mode
-- `npm run test:coverage` - Run tests with coverage report
-
-### Quality Checks
-
-- `npm run ci` - Run all quality checks (type-check, lint, test) - used in CI pipeline
-- `npm run check` - Alias for `ci`
-- `npm run check:full` - Run all checks including build (most comprehensive)
-
-## 📝 Available Scripts
-
-### Development
-
-- `npm run dev` - Start development server with hot reload
-
-### Building
-
-- `npm run build` - Production build (runs type-check, lint, test, then builds)
-- `npm run preview` - Preview production build locally
-
-### Code Quality
-
-- `npm run type-check` - Run TypeScript type checking
-- `npm run lint` - Check code with ESLint
-- `npm run lint:fix` - Fix ESLint issues automatically
-- `npm run format` - Format all files with Prettier
-- `npm run format:check` - Check if files are formatted correctly
-
-### Testing
-
-- `npm run test` - Run tests once
-- `npm run test:watch` - Run tests in watch mode
-- `npm run test:coverage` - Run tests with coverage report
-
-### Quality Checks
-
-- `npm run ci` - Run all quality checks (type-check, lint, test)
-- `npm run check:full` - Run all checks including build
+See `package.json` for all available scripts.
 
 ## 🎨 Key Features
 
@@ -188,9 +199,16 @@ TanStack Router uses file-based routing. Create files in `src/routes/` and route
 
 TanStack Query is configured for API calls with automatic caching. Create query hooks in `src/hooks/` for Spotify API integration.
 
+## 📚 Documentation
+
+- [Spotify Integration Summary](./docs/spotify-integration-summary.md) - Comprehensive overview of Spotify integration
+- [React Grid Layout](./docs/readme-react-grid-layout.md) - Grid layout documentation
+
 ## 📚 Resources
 
 - [Spotify Web API](https://developer.spotify.com/documentation/web-api)
+- [Firebase Documentation](https://firebase.google.com/docs)
+- [Firebase Emulators](https://firebase.google.com/docs/emulator-suite)
 - [TanStack Router](https://tanstack.com/router)
 - [TanStack Query](https://tanstack.com/query)
 - [react-grid-layout](https://github.com/react-grid-layout/react-grid-layout)
