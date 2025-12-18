@@ -12,16 +12,21 @@ import {
 type AuthMode = "login" | "signup";
 
 export const Login = () => {
-  const [mode, setMode] = useState<AuthMode>("login");
+  const navigate = useNavigate();
+  const { isAuthed, loading, setError: setAuthError } = useAuth();
+  const search = useSearch({ from: "/login" });
+  const nextPath =
+    (search as { next?: string; mode?: "login" | "signup" }).next || "/app";
+  const searchMode = (search as { next?: string; mode?: "login" | "signup" })
+    .mode;
+
+  const [mode, setMode] = useState<AuthMode>(
+    searchMode === "signup" ? "signup" : "login"
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const navigate = useNavigate();
-  const { isAuthed, loading, setError: setAuthError } = useAuth();
-  const search = useSearch({ from: "/login" });
-  const nextPath = (search as { next?: string }).next || "/app";
 
   // Redirect authenticated users away from login page
   useEffect(() => {

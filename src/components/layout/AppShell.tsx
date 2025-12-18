@@ -5,6 +5,7 @@ import { Link } from "@tanstack/react-router";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { SpotifyConnectButton } from "@/components/SpotifyConnectButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { useCommandPalette } from "@/contexts/CommandPaletteContext";
@@ -62,20 +63,12 @@ export function AppShell({ children }: AppShellProps) {
                 Home
               </Link>
               <Link
-                to="/example"
-                className="transition-colors hover:text-foreground/80"
-                activeProps={{ className: "text-foreground" }}
-                inactiveProps={{ className: "text-foreground/60" }}
-              >
-                Example
-              </Link>
-              <Link
                 to="/app"
                 className="transition-colors hover:text-foreground/80"
                 activeProps={{ className: "text-foreground" }}
                 inactiveProps={{ className: "text-foreground/60" }}
               >
-                App
+                Trackboard
               </Link>
             </nav>
           </div>
@@ -85,7 +78,7 @@ export function AppShell({ children }: AppShellProps) {
               <SpotifyConnectButton variant="outline" size="sm" />
             )}
           </div>
-          {/* Right: CommandPalette Input, ProfileMenu or ThemeToggle */}
+          {/* Right: CommandPalette Input, ProfileMenu, Sign in/up buttons, or ThemeToggle */}
           <div className="flex items-center justify-end gap-2">
             {!loading && isAuthed && (
               <div className="relative flex items-center">
@@ -102,6 +95,25 @@ export function AppShell({ children }: AppShellProps) {
                   </KbdGroup>
                 </div>
               </div>
+            )}
+            {!loading && !isAuthed && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  render={<Link to="/login" search={{ mode: "login" }} />}
+                  nativeButton={false}
+                >
+                  Sign in
+                </Button>
+                <Button
+                  size="sm"
+                  render={<Link to="/login" search={{ mode: "signup" }} />}
+                  nativeButton={false}
+                >
+                  Sign up
+                </Button>
+              </>
             )}
             {!loading && isAuthed ? <ProfileMenu /> : <ThemeToggle />}
           </div>
