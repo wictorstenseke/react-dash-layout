@@ -33,7 +33,7 @@ export const useSpotifyPlayerInternal = () => {
   // Store target volume for fade in/out (default 0.5)
   const targetVolumeRef = useRef<number>(0.5);
   // Track active fade animation to prevent overlapping fades
-  const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Update ref when tokenData changes
   useEffect(() => {
