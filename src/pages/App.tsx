@@ -24,6 +24,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { useCommandPalette } from "@/contexts/CommandPaletteContext";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useSpotifyPlayer } from "@/features/spotify/useSpotifyPlayer";
 import {
@@ -67,6 +68,7 @@ export const App = () => {
   const deleteGroup = useDeleteGroupMutation();
   const createGroup = useCreateGroupMutation();
   const { togglePlay, isPlaying, isReady } = useSpotifyPlayer();
+  const { open, setOpen } = useCommandPalette();
 
   const { width, containerRef, mounted } = useContainerWidth();
   const [layout, setLayout] = useState<Layout>([]);
@@ -260,6 +262,8 @@ export const App = () => {
     return (
       <>
         <CommandPalette
+          open={open}
+          onOpenChange={setOpen}
           onCreateGroup={handleCreateGroup}
           onResetLayout={handleResetLayout}
           onToggleTheme={handleToggleTheme}
@@ -292,6 +296,8 @@ export const App = () => {
   return (
     <>
       <CommandPalette
+        open={open}
+        onOpenChange={setOpen}
         onCreateGroup={handleCreateGroup}
         onResetLayout={handleResetLayout}
         onToggleTheme={handleToggleTheme}

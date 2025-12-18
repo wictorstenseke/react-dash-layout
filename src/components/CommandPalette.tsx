@@ -29,6 +29,8 @@ type CommandPaletteProps = {
   onCreateGroup?: () => void;
   onResetLayout?: () => void;
   onToggleTheme?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const getInitialIsDark = (): boolean => {
@@ -48,8 +50,14 @@ export const CommandPalette = ({
   onCreateGroup,
   onResetLayout,
   onToggleTheme,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: CommandPaletteProps) => {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  // Use controlled state if provided, otherwise use internal state
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = controlledOnOpenChange ?? setInternalOpen;
   const [isDark, setIsDark] = useState<boolean>(() => getInitialIsDark());
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -78,13 +86,13 @@ export const CommandPalette = ({
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((open) => !open);
+        setOpen((prev) => !prev);
       }
     };
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, []);
+  }, [setOpen]);
 
   // Handle cmd+n shortcut to create group
   useEffect(() => {
