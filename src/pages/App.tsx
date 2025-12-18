@@ -55,22 +55,14 @@ export const App = () => {
   const [layout, setLayout] = useState<Layout>([]);
   const [isSquareDragging, setIsSquareDragging] = useState(false);
 
-  // Early return if not authenticated - prevents any effects from running
-  // This is a safety check in case RequireAuth hasn't redirected yet
-  if (authLoading || !isAuthed || !user?.uid) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="text-muted-foreground">Loading…</div>
-      </div>
-    );
-  }
-
   // Track previous group IDs to detect actual changes
   const prevGroupIdsRef = useRef<string>("");
   // Track previous dataUpdatedAt to prevent unnecessary re-runs
   const prevDataUpdatedAtRef = useRef<number | undefined>(undefined);
   // Flag to skip onLayoutChange when we programmatically set the layout
   const skipNextLayoutChangeRef = useRef(false);
+  // Track initial mount to skip saving on first render
+  const isInitialMountRef = useRef(true);
 
   // Build layout from groups - this is computed, not an effect
   const computeLayout = (groupList: typeof groups, uid: string): Layout => {
@@ -148,7 +140,6 @@ export const App = () => {
   }, [user?.uid, dataUpdatedAt]);
 
   // Save layout when it changes (but not on initial load)
-  const isInitialMountRef = useRef(true);
   useEffect(() => {
     if (isInitialMountRef.current) {
       isInitialMountRef.current = false;
@@ -158,6 +149,16 @@ export const App = () => {
       saveLayout(user.uid, layout);
     }
   }, [layout, user?.uid]);
+
+  // Early return if not authenticated - prevents any effects from running
+  // This is a safety check in case RequireAuth hasn't redirected yet
+  if (authLoading || !isAuthed || !user?.uid) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
 
   const handleLayoutChange = (newLayout: Layout) => {
     // Skip if this was triggered by our programmatic update
