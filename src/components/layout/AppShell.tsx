@@ -5,7 +5,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 
 import { Link } from "@tanstack/react-router";
 
-import { PlayerStatus } from "@/components/PlayerStatus";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { SpotifyConnectButton } from "@/components/SpotifyConnectButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -83,7 +82,6 @@ export function AppShell({ children }: AppShellProps) {
             {!loading && isAuthed ? (
               <>
                 <SpotifyConnectButton variant="outline" size="sm" />
-                <PlayerStatus />
                 <ButtonGroup aria-label="Example split button">
                   <Button variant="outline" size="sm">
                     Follow

@@ -24,6 +24,7 @@ if (getApps().length === 0) {
 export { spotifyLogin } from "./spotify/login.js";
 export { spotifyCallback } from "./spotify/callback.js";
 export { spotifyRefresh } from "./spotify/refresh.js";
+export { spotifyDisconnect } from "./spotify/disconnect.js";
 
 // Export Spotify proxy functions
 export { spotifyPlaylists } from "./spotify/playlists.js";

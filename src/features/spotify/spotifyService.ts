@@ -150,4 +150,13 @@ export const spotifyService = {
       body: JSON.stringify({ trackId, deviceId }),
     });
   },
+
+  /**
+   * Disconnect Spotify account
+   */
+  disconnect: async (): Promise<void> => {
+    await fetchWithAuth<void>("/spotifyDisconnect", {
+      method: "POST",
+    });
+  },
 };

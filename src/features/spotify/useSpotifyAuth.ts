@@ -101,3 +101,18 @@ export const useRefreshSpotifyToken = () => {
     },
   });
 };
+
+/**
+ * Hook to disconnect Spotify account
+ */
+export const useDisconnectSpotify = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => spotifyService.disconnect(),
+    onSuccess: () => {
+      // Invalidate all Spotify-related queries to refresh the UI
+      queryClient.invalidateQueries({ queryKey: spotifyKeys.all });
+    },
+  });
+};
