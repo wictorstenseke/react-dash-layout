@@ -4,7 +4,8 @@ import {
   Add01Icon,
   ArrowReloadHorizontalIcon,
   Logout01Icon,
-  Upload03Icon,
+  Moon02Icon,
+  Sun03Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
@@ -27,17 +28,50 @@ import { signOutUser } from "@/features/auth/authService";
 type CommandPaletteProps = {
   onCreateGroup?: () => void;
   onResetLayout?: () => void;
-  onCompact?: () => void;
+  onToggleTheme?: () => void;
+};
+
+const getInitialIsDark = (): boolean => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const stored = window.localStorage.getItem("theme");
+
+  if (stored === "dark") return true;
+  if (stored === "light") return false;
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
 };
 
 export const CommandPalette = ({
   onCreateGroup,
   onResetLayout,
-  onCompact,
+  onToggleTheme,
 }: CommandPaletteProps) => {
   const [open, setOpen] = useState(false);
+  const [isDark, setIsDark] = useState<boolean>(() => getInitialIsDark());
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Sync theme state with DOM
+  useEffect(() => {
+    const updateTheme = () => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    };
+
+    // Check on mount
+    updateTheme();
+
+    // Watch for theme changes
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Open command palette with cmd+k or ctrl+k
   useEffect(() => {
@@ -51,6 +85,32 @@ export const CommandPalette = ({
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, []);
+
+  // Handle cmd+n shortcut to create group
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "n" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        onCreateGroup?.();
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [onCreateGroup]);
+
+  // Handle cmd+j shortcut to toggle theme
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "j" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        onToggleTheme?.();
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [onToggleTheme]);
 
   const handleSignOut = async () => {
     setOpen(false);
@@ -70,9 +130,9 @@ export const CommandPalette = ({
     onResetLayout?.();
   };
 
-  const handleCompact = () => {
+  const handleToggleTheme = () => {
     setOpen(false);
-    onCompact?.();
+    onToggleTheme?.();
   };
 
   return (
@@ -91,17 +151,6 @@ export const CommandPalette = ({
               <span>Create Group</span>
               <CommandShortcut>⌘N</CommandShortcut>
             </CommandItem>
-          </CommandGroup>
-          <CommandSeparator />
-          <CommandGroup heading="Layout">
-            <CommandItem onSelect={handleCompact}>
-              <HugeiconsIcon
-                icon={Upload03Icon}
-                strokeWidth={2}
-                className="mr-2"
-              />
-              <span>Compact Layout</span>
-            </CommandItem>
             <CommandItem onSelect={handleResetLayout}>
               <HugeiconsIcon
                 icon={ArrowReloadHorizontalIcon}
@@ -109,6 +158,18 @@ export const CommandPalette = ({
                 className="mr-2"
               />
               <span>Reset Layout</span>
+            </CommandItem>
+          </CommandGroup>
+          <CommandSeparator />
+          <CommandGroup heading="Appearance">
+            <CommandItem onSelect={handleToggleTheme}>
+              <HugeiconsIcon
+                icon={isDark ? Sun03Icon : Moon02Icon}
+                strokeWidth={2}
+                className="mr-2"
+              />
+              <span>Toggle Theme</span>
+              <CommandShortcut>⌘J</CommandShortcut>
             </CommandItem>
           </CommandGroup>
           {user && (

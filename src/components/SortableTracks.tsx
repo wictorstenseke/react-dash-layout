@@ -183,8 +183,8 @@ const SortableTrack = ({
       <ContextMenuContent>
         {canPlay && (
           <ContextMenuItem
-            onSelect={(event) => {
-              event.preventDefault();
+            onClick={(e) => {
+              e.preventDefault();
               handlePlay();
             }}
           >
@@ -207,8 +207,8 @@ const SortableTrack = ({
               {TRACK_COLORS.map((color) => (
                 <ContextMenuItem
                   key={color}
-                  onSelect={(event) => {
-                    event.preventDefault();
+                  onClick={(e) => {
+                    e.preventDefault();
                     handleColorChange(color);
                   }}
                 >
@@ -234,8 +234,8 @@ const SortableTrack = ({
             <ContextMenuItem
               variant="destructive"
               className="gap-0"
-              onSelect={(event) => {
-                event.preventDefault();
+              onClick={(e) => {
+                e.preventDefault();
                 handleDelete();
               }}
             >

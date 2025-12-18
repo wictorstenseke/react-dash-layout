@@ -114,6 +114,7 @@ export const SpotifyConnectButton = ({
   return (
     <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <DropdownMenuTrigger
+        nativeButton={false}
         render={
           <div ref={buttonGroupRef} className="inline-flex">
             <ButtonGroup aria-label="Spotify connection actions">

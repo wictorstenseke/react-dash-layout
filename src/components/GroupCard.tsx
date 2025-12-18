@@ -109,20 +109,20 @@ export const GroupCard = ({
   };
 
   const handleDeleteTrack = (trackId: string) => {
-    deleteTrack.mutate(trackId);
+    deleteTrack.mutate(trackId, {
+      onError: (error) => {
+        console.error("Failed to delete track:", error);
+      },
+    });
   };
 
   const handleUpdateTrackColor = (trackId: string, color: TrackColor): void => {
-    console.log("Updating track color:", { trackId, color });
     updateTrack.mutate(
       {
         trackId,
         data: { color },
       },
       {
-        onSuccess: () => {
-          console.log("Track color updated successfully");
-        },
         onError: (error) => {
           console.error("Failed to update track color:", error);
         },
