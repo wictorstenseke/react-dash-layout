@@ -91,7 +91,14 @@ export async function updateTrack(
       "tracks",
       trackId
     );
+    console.log("Updating track in Firebase:", {
+      uid,
+      groupId,
+      trackId,
+      patch,
+    });
     await updateDoc(trackRef, patch);
+    console.log("Track updated successfully in Firebase");
   } catch (error) {
     console.error("Error updating track:", error);
     throw new Error("Failed to update track");

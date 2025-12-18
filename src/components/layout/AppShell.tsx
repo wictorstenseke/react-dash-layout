@@ -1,23 +1,10 @@
 import type { ReactNode } from "react";
 
-import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-
 import { Link } from "@tanstack/react-router";
 
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { SpotifyConnectButton } from "@/components/SpotifyConnectButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Button } from "@/components/ui/button";
-import { ButtonGroup } from "@/components/ui/button-group";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/features/auth/AuthProvider";
 
 interface AppShellProps {
@@ -31,8 +18,9 @@ export function AppShell({ children }: AppShellProps) {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-        <div className="container mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="mr-4 flex">
+        <div className="container mx-auto grid h-14 max-w-screen-2xl grid-cols-3 items-center px-4 sm:px-6 lg:px-8">
+          {/* Left: Logo + Nav */}
+          <div className="flex">
             <Link
               to="/"
               className="mr-6 flex items-center justify-center rounded-md p-1.5 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
@@ -78,55 +66,15 @@ export function AppShell({ children }: AppShellProps) {
               </Link>
             </nav>
           </div>
-          <div className="flex items-center gap-2">
-            {!loading && isAuthed ? (
-              <>
-                <SpotifyConnectButton variant="outline" size="sm" />
-                <ButtonGroup aria-label="Example split button">
-                  <Button variant="outline" size="sm">
-                    Follow
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button
-                          variant="outline"
-                          size="icon-sm"
-                          aria-label="Open example menu"
-                        >
-                          <HugeiconsIcon
-                            icon={ArrowDown01Icon}
-                            strokeWidth={2}
-                          />
-                        </Button>
-                      }
-                    />
-                    <DropdownMenuContent
-                      align="end"
-                      className="w-auto min-w-max [--radius:1rem]"
-                    >
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem>Mute Conversation</DropdownMenuItem>
-                        <DropdownMenuItem>Mark as Read</DropdownMenuItem>
-                        <DropdownMenuItem>Report Conversation</DropdownMenuItem>
-                        <DropdownMenuItem>Block User</DropdownMenuItem>
-                        <DropdownMenuItem>Share Conversation</DropdownMenuItem>
-                        <DropdownMenuItem>Copy Conversation</DropdownMenuItem>
-                      </DropdownMenuGroup>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem variant="destructive">
-                          Delete Conversation
-                        </DropdownMenuItem>
-                      </DropdownMenuGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </ButtonGroup>
-                <ProfileMenu />
-              </>
-            ) : (
-              <ThemeToggle />
+          {/* Center: SpotifyConnectButton */}
+          <div className="flex items-center justify-center">
+            {!loading && isAuthed && (
+              <SpotifyConnectButton variant="outline" size="sm" />
             )}
+          </div>
+          {/* Right: ProfileMenu or ThemeToggle */}
+          <div className="flex items-center justify-end gap-2">
+            {!loading && isAuthed ? <ProfileMenu /> : <ThemeToggle />}
           </div>
         </div>
       </header>

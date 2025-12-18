@@ -17,6 +17,9 @@ import { useCreateGroupMutation, useGroupsQuery } from "@/hooks/useGroups";
 import { cn } from "@/lib/utils";
 
 const colorClasses: Record<GroupColor, { bg: string; ring: string }> = {
+  gray: { bg: "bg-gray-500", ring: "ring-gray-500" },
+  "gray-light": { bg: "bg-gray-400", ring: "ring-gray-400" },
+  "gray-dark": { bg: "bg-gray-600", ring: "ring-gray-600" },
   blue: { bg: "bg-blue-500", ring: "ring-blue-500" },
   green: { bg: "bg-green-500", ring: "ring-green-500" },
   purple: { bg: "bg-purple-500", ring: "ring-purple-500" },
@@ -25,18 +28,24 @@ const colorClasses: Record<GroupColor, { bg: string; ring: string }> = {
   teal: { bg: "bg-teal-500", ring: "ring-teal-500" },
   red: { bg: "bg-red-500", ring: "ring-red-500" },
   yellow: { bg: "bg-yellow-500", ring: "ring-yellow-500" },
-  indigo: { bg: "bg-indigo-500", ring: "ring-indigo-500" },
-  cyan: { bg: "bg-cyan-500", ring: "ring-cyan-500" },
 };
 
 type CreateGroupDialogProps = {
   trigger?: React.ReactElement;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
-export const CreateGroupDialog = ({ trigger }: CreateGroupDialogProps) => {
-  const [open, setOpen] = useState(false);
+export const CreateGroupDialog = ({
+  trigger,
+  open: controlledOpen,
+  onOpenChange,
+}: CreateGroupDialogProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [name, setName] = useState("");
-  const [color, setColor] = useState<GroupColor>("blue");
+  const [color, setColor] = useState<GroupColor>("gray");
 
   const { data: groups } = useGroupsQuery();
   const createGroup = useCreateGroupMutation();
@@ -56,7 +65,7 @@ export const CreateGroupDialog = ({ trigger }: CreateGroupDialogProps) => {
 
     // Reset form and close
     setName("");
-    setColor("blue");
+    setColor("gray");
     setOpen(false);
   };
 

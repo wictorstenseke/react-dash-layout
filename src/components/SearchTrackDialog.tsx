@@ -36,13 +36,19 @@ const colorClasses: Record<TrackColor, { bg: string; ring: string }> = {
 type SearchTrackDialogProps = {
   groupId: string;
   trigger?: React.ReactElement;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 export const SearchTrackDialog = ({
   groupId,
   trigger,
+  open: controlledOpen,
+  onOpenChange,
 }: SearchTrackDialogProps) => {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTrack, setSelectedTrack] = useState<SpotifyTrack | null>(null);
   const [color, setColor] = useState<TrackColor>("blue");
@@ -109,9 +115,11 @@ export const SearchTrackDialog = ({
         }
       }}
     >
-      <DialogTrigger
-        render={trigger ?? <Button size="sm">Search Track</Button>}
-      />
+      {trigger && (
+        <DialogTrigger
+          render={trigger ?? <Button size="sm">Search Track</Button>}
+        />
+      )}
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>

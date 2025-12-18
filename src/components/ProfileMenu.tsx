@@ -1,11 +1,20 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import {
+  Logout01Icon,
+  Moon02Icon,
+  Sun03Icon,
+  Tick02Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 
 import { useNavigate } from "@tanstack/react-router";
 
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -13,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { signOutUser } from "@/features/auth/authService";
+import { cn } from "@/lib/utils";
 
 type ProfileMenuProps = {
   className?: string;
@@ -189,44 +199,117 @@ function md5(input: string): string {
   return (toHex(a) + toHex(b) + toHex(c) + toHex(d)).toLowerCase();
 }
 
-function getInitials(from?: string | null): string {
-  if (!from) return "?";
+function getInitials(
+  displayName?: string | null,
+  email?: string | null
+): string {
+  // Priority: displayName first, then first letter of email
+  if (displayName) {
+    const clean = displayName.replace(/[^a-zA-Z0-9]+/g, " ").trim();
+    const parts = clean.split(/\s+/).filter(Boolean);
 
-  const base = from.includes("@") ? from.split("@")[0] : from;
-  const clean = base.replace(/[^a-zA-Z0-9]+/g, " ").trim();
-  const parts = clean.split(/\s+/).filter(Boolean);
-
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) {
-    const [word] = parts;
-    if (word.length === 1) return word.toUpperCase();
-    return (word[0] + word[word.length - 1]).toUpperCase();
+    if (parts.length === 0) {
+      // Fall through to email
+    } else if (parts.length === 1) {
+      const [word] = parts;
+      if (word.length === 1) return word.toUpperCase();
+      return (word[0] + word[word.length - 1]).toUpperCase();
+    } else {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
   }
 
-  return (parts[0][0] + parts[1][0]).toUpperCase();
+  // Fallback to first letter of email
+  if (email) {
+    const normalized = email.trim().toLowerCase();
+    const firstChar = normalized[0];
+    if (firstChar && /[a-z0-9]/.test(firstChar)) {
+      return firstChar.toUpperCase();
+    }
+  }
+
+  return "?";
 }
+
+const getInitialIsDark = (): boolean => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const stored = window.localStorage.getItem("theme");
+
+  if (stored === "dark") return true;
+  if (stored === "light") return false;
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+};
 
 export function ProfileMenu({ className }: ProfileMenuProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
+  const [isDark, setIsDark] = useState<boolean>(() => getInitialIsDark());
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuWidth, setMenuWidth] = useState<number | undefined>(undefined);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const email = user?.email ?? undefined;
   const displayName = user?.displayName ?? undefined;
 
   const avatarSrc = useMemo(() => {
-    if (user?.photoURL) return user.photoURL;
+    // Priority: Firebase Auth photoURL first, then Gravatar
+    if (user?.photoURL) {
+      return user.photoURL;
+    }
     if (!email) return null;
 
     const normalized = email.trim().toLowerCase();
     const hash = md5(normalized);
-    return `https://www.gravatar.com/avatar/${hash}?d=identicon`;
-  }, [email, user]);
+    // Try Gravatar - if it doesn't exist (404), AvatarImage will handle the error and show fallback
+    return `https://www.gravatar.com/avatar/${hash}?d=404&s=128`;
+  }, [email, user?.photoURL]);
 
   const initials = useMemo(
-    () => getInitials(displayName ?? email ?? undefined),
+    () => getInitials(displayName, email),
     [displayName, email]
   );
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+      window.localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      window.localStorage.setItem("theme", "light");
+    }
+  }, [isDark]);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    if (!contentRef.current) {
+      return;
+    }
+
+    // Use requestAnimationFrame to ensure DOM is fully rendered
+    const measureWidth = () => {
+      if (contentRef.current) {
+        // Get the natural width of the content
+        const width =
+          contentRef.current.scrollWidth || contentRef.current.offsetWidth;
+        setMenuWidth(width + 40);
+      }
+    };
+
+    // Wait for next frame to ensure layout is complete
+    requestAnimationFrame(() => {
+      requestAnimationFrame(measureWidth);
+    });
+  }, [menuOpen]);
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -238,62 +321,144 @@ export function ProfileMenu({ className }: ProfileMenuProps) {
     }
   };
 
+  const handleThemeChange = (theme: "light" | "dark") => {
+    setIsDark(theme === "dark");
+  };
+
   if (!user) {
     return null;
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu
+      open={menuOpen}
+      onOpenChange={(open) => {
+        setMenuOpen(open);
+        if (!open) {
+          setMenuWidth(undefined);
+        }
+      }}
+    >
       <DropdownMenuTrigger
-        className="rounded-full border border-border/70 bg-muted/40 p-0"
+        className="rounded-full border border-border/70 bg-muted/40 p-0 transition-all hover:border-border hover:bg-muted/60 cursor-pointer"
         aria-label="Open profile menu"
       >
-        {avatarSrc ? (
-          <img
-            src={avatarSrc}
-            alt={displayName ?? email ?? "Profile"}
-            className="h-8 w-8 rounded-full object-cover"
-          />
-        ) : (
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-primary/80 to-primary text-xs font-semibold text-primary-foreground">
+        <Avatar className="h-8 w-8">
+          {avatarSrc && (
+            <AvatarImage
+              src={avatarSrc}
+              alt={displayName ?? email ?? "Profile"}
+            />
+          )}
+          <AvatarFallback className="bg-linear-to-br from-primary/80 to-primary text-xs font-semibold text-primary-foreground">
             {initials}
-          </span>
-        )}
+          </AvatarFallback>
+        </Avatar>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={6} className={className}>
-        <DropdownMenuLabel>
-          <div className="flex flex-col gap-0.5">
-            {displayName && (
-              <span className="truncate text-xs font-medium text-foreground">
-                {displayName}
-              </span>
-            )}
-            {email && (
-              <span className="truncate text-xs text-muted-foreground">
-                {email}
-              </span>
-            )}
-          </div>
-        </DropdownMenuLabel>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={6}
+        className={cn("min-w-48", className)}
+        style={
+          menuWidth
+            ? {
+                width: `${menuWidth}px`,
+                minWidth: `${Math.max(menuWidth, 192)}px`,
+              }
+            : undefined
+        }
+      >
+        <div ref={contentRef}>
+          {/* Profile Section */}
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>
+              <div className="flex min-w-0 flex-col items-center gap-2 py-2">
+                <Avatar className="h-10 w-10">
+                  {avatarSrc && (
+                    <AvatarImage
+                      src={avatarSrc}
+                      alt={displayName ?? email ?? "Profile"}
+                    />
+                  )}
+                  <AvatarFallback className="bg-linear-to-br from-primary/80 to-primary text-sm font-semibold text-primary-foreground">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                {displayName && (
+                  <span className="truncate text-sm font-medium">
+                    {displayName}
+                  </span>
+                )}
+                {email && (
+                  <span className="truncate text-xs text-muted-foreground">
+                    {email}
+                  </span>
+                )}
+              </div>
+            </DropdownMenuLabel>
+          </DropdownMenuGroup>
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
 
-        <DropdownMenuItem>
-          <div className="flex w-full items-center justify-between">
-            <span className="text-xs">Appearance</span>
-            <ThemeToggle />
-          </div>
-        </DropdownMenuItem>
+          {/* Theme Section */}
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="text-muted-foreground">
+              Theme
+            </DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() => handleThemeChange("light")}
+              className="text-muted-foreground"
+            >
+              <HugeiconsIcon
+                icon={Sun03Icon}
+                strokeWidth={2}
+                className="text-muted-foreground"
+              />
+              Light
+              {!isDark && (
+                <HugeiconsIcon
+                  icon={Tick02Icon}
+                  strokeWidth={2}
+                  className="ml-auto text-muted-foreground"
+                />
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleThemeChange("dark")}
+              className="text-muted-foreground"
+            >
+              <HugeiconsIcon
+                icon={Moon02Icon}
+                strokeWidth={2}
+                className="text-muted-foreground"
+              />
+              Dark
+              {isDark && (
+                <HugeiconsIcon
+                  icon={Tick02Icon}
+                  strokeWidth={2}
+                  className="ml-auto text-muted-foreground"
+                />
+              )}
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
 
-        <DropdownMenuItem
-          onClick={handleSignOut}
-          disabled={signingOut}
-          variant="destructive"
-        >
-          Sign out
-        </DropdownMenuItem>
+          {/* Sign Out */}
+          <DropdownMenuItem
+            onClick={handleSignOut}
+            disabled={signingOut}
+            variant="destructive"
+          >
+            <HugeiconsIcon
+              icon={Logout01Icon}
+              strokeWidth={2}
+              className="text-destructive"
+            />
+            Sign out
+          </DropdownMenuItem>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

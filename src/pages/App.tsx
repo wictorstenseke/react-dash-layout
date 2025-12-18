@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   ArrowReloadHorizontalIcon,
+  Playlist01Icon,
   Upload03Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -11,11 +12,23 @@ import ReactGridLayout, {
   verticalCompactor,
 } from "react-grid-layout";
 
-import { CreateGroupDialog } from "@/components/CreateGroupDialog";
+import { CommandPalette } from "@/components/CommandPalette";
 import { GroupCard } from "@/components/GroupCard";
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { useDeleteGroupMutation, useGroupsQuery } from "@/hooks/useGroups";
+import {
+  useCreateGroupMutation,
+  useDeleteGroupMutation,
+  useGroupsQuery,
+} from "@/hooks/useGroups";
 
 const GRID_COLS = 48;
 const STORAGE_KEY_PREFIX = "dashboard-layout-";
@@ -50,6 +63,7 @@ export const App = () => {
   const { user, loading: authLoading, isAuthed } = useAuth();
   const { data: groups = [], isLoading, dataUpdatedAt } = useGroupsQuery();
   const deleteGroup = useDeleteGroupMutation();
+  const createGroup = useCreateGroupMutation();
 
   const { width, containerRef, mounted } = useContainerWidth();
   const [layout, setLayout] = useState<Layout>([]);
@@ -150,6 +164,24 @@ export const App = () => {
     }
   }, [layout, user?.uid]);
 
+  // Handle cmd+n shortcut to create group
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "n" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        const groupNumber = (groups?.length ?? 0) + 1;
+        createGroup.mutate({
+          name: `Group ${groupNumber}`,
+          color: "blue",
+          order: groups?.length ?? 0,
+        });
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [groups?.length, createGroup]);
+
   // Early return if not authenticated - prevents any effects from running
   // This is a safety check in case RequireAuth hasn't redirected yet
   if (authLoading || !isAuthed || !user?.uid) {
@@ -215,6 +247,15 @@ export const App = () => {
     setIsSquareDragging(false);
   };
 
+  const handleCreateGroup = async () => {
+    const groupNumber = (groups?.length ?? 0) + 1;
+    await createGroup.mutateAsync({
+      name: `Group ${groupNumber}`,
+      color: "blue",
+      order: groups?.length ?? 0,
+    });
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -227,85 +268,109 @@ export const App = () => {
   // Empty state
   if (groups.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold">Welcome to your Dashboard</h1>
-          <p className="text-muted-foreground max-w-md">
-            Create your first group to start organizing your tracks. Groups help
-            you organize songs into sets, playlists, or categories.
-          </p>
-        </div>
-        <CreateGroupDialog
-          trigger={<Button size="lg">Create your first group</Button>}
+      <>
+        <CommandPalette
+          onCreateGroup={handleCreateGroup}
+          onResetLayout={handleResetLayout}
+          onCompact={handleBringToTop}
         />
-      </div>
+        <Empty className="bg-muted/50 p-20 rounded-xl border w-auto max-w-2xl mx-auto">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <HugeiconsIcon
+                icon={Playlist01Icon}
+                strokeWidth={1.5}
+                className="size-12"
+              />
+            </EmptyMedia>
+            <EmptyTitle>Welcome to your Dashboard</EmptyTitle>
+            <EmptyDescription>
+              Create a group to organize your tracks into sets, playlists, or
+              categories.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button size="lg" onClick={handleCreateGroup}>
+              Create your first group
+            </Button>
+          </EmptyContent>
+        </Empty>
+      </>
     );
   }
 
   return (
-    <div className="flex flex-col space-y-6 py-4">
-      {/* Page Header */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-sm text-muted-foreground">
-              {groups.length} group{groups.length !== 1 ? "s" : ""}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <CreateGroupDialog />
-            <Button variant="outline" size="sm" onClick={handleBringToTop}>
-              <HugeiconsIcon icon={Upload03Icon} className="mr-1.5" />
-              <span>Compact</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleResetLayout}>
-              <HugeiconsIcon
-                icon={ArrowReloadHorizontalIcon}
-                className="mr-1.5"
-              />
-              <span>Reset layout</span>
-            </Button>
+    <>
+      <CommandPalette
+        onCreateGroup={handleCreateGroup}
+        onResetLayout={handleResetLayout}
+        onCompact={handleBringToTop}
+      />
+      <div className="flex flex-col space-y-6 py-4">
+        {/* Page Header */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+              <p className="text-sm text-muted-foreground">
+                {groups.length} group{groups.length !== 1 ? "s" : ""}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button onClick={handleCreateGroup}>Create Group</Button>
+              <Button variant="outline" size="sm" onClick={handleBringToTop}>
+                <HugeiconsIcon icon={Upload03Icon} className="mr-1.5" />
+                <span>Compact</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleResetLayout}>
+                <HugeiconsIcon
+                  icon={ArrowReloadHorizontalIcon}
+                  className="mr-1.5"
+                />
+                <span>Reset layout</span>
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Grid Layout Container */}
-      <div ref={containerRef} className="w-full">
-        {mounted && layout.length > 0 && (
-          <ReactGridLayout
-            layout={layout}
-            onLayoutChange={handleLayoutChange}
-            width={width}
-            gridConfig={{
-              cols: GRID_COLS,
-              rowHeight: 16,
-              margin: [12, 12],
-              containerPadding: [16, 16],
-            }}
-            dragConfig={{
-              enabled: !isSquareDragging,
-              threshold: 3,
-              handle: ".drag-handle",
-            }}
-            resizeConfig={{
-              enabled: true,
-              handles: ["s", "w", "e", "n", "sw", "nw", "se", "ne"],
-            }}
-          >
-            {groups.map((group) => (
-              <div key={group.id}>
-                <GroupCard
-                  group={group}
-                  onDelete={() => handleDeleteGroup(group.id)}
-                  onSquareDragStart={handleSquareDragStart}
-                  onSquareDragEnd={handleSquareDragEnd}
-                />
-              </div>
-            ))}
-          </ReactGridLayout>
-        )}
+        {/* Grid Layout Container */}
+        <div ref={containerRef} className="w-full">
+          {mounted && layout.length > 0 && (
+            <ReactGridLayout
+              layout={layout}
+              onLayoutChange={handleLayoutChange}
+              width={width}
+              gridConfig={{
+                cols: GRID_COLS,
+                rowHeight: 16,
+                margin: [12, 12],
+                containerPadding: [16, 16],
+              }}
+              dragConfig={{
+                enabled: !isSquareDragging,
+                threshold: 3,
+                handle: ".drag-handle",
+                cancel: ".no-drag",
+              }}
+              resizeConfig={{
+                enabled: true,
+                handles: ["s", "w", "e", "n", "sw", "nw", "se", "ne"],
+              }}
+            >
+              {groups.map((group) => (
+                <div key={group.id}>
+                  <GroupCard
+                    group={group}
+                    onDelete={() => handleDeleteGroup(group.id)}
+                    onSquareDragStart={handleSquareDragStart}
+                    onSquareDragEnd={handleSquareDragEnd}
+                  />
+                </div>
+              ))}
+            </ReactGridLayout>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };

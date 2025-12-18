@@ -1,17 +1,28 @@
+import { useState } from "react";
+
 import {
-  DragDropHorizontalIcon,
   Delete02Icon,
+  MoreVerticalIcon,
+  PencilEdit02Icon,
   SquareArrowDiagonal02Icon,
   Upload03Icon,
   Search01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
-import { AddTrackDialog } from "@/components/AddTrackDialog";
+import { DeleteGroupDialog } from "@/components/DeleteGroupDialog";
+import { EditGroupDialog } from "@/components/EditGroupDialog";
 import { ImportPlaylistDialog } from "@/components/ImportPlaylistDialog";
 import { SearchTrackDialog } from "@/components/SearchTrackDialog";
 import { SortableTracks } from "@/components/SortableTracks";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   useDeleteTrackMutation,
@@ -20,9 +31,21 @@ import {
   useUpdateTrackMutation,
 } from "@/hooks/useTracks";
 
-import type { Group, GroupColor } from "@/features/groups/types";
+import type { Group, GroupColor, TrackColor } from "@/features/groups/types";
 
 const groupColorClasses: Record<GroupColor, { bg: string; border: string }> = {
+  gray: {
+    bg: "bg-gray-100 dark:bg-gray-900/30",
+    border: "border-gray-300 dark:border-gray-700",
+  },
+  "gray-light": {
+    bg: "bg-gray-50 dark:bg-gray-800/30",
+    border: "border-gray-200 dark:border-gray-600",
+  },
+  "gray-dark": {
+    bg: "bg-gray-200 dark:bg-gray-950/30",
+    border: "border-gray-400 dark:border-gray-800",
+  },
   blue: {
     bg: "bg-blue-100 dark:bg-blue-900/30",
     border: "border-blue-300 dark:border-blue-700",
@@ -55,14 +78,6 @@ const groupColorClasses: Record<GroupColor, { bg: string; border: string }> = {
     bg: "bg-yellow-100 dark:bg-yellow-900/30",
     border: "border-yellow-300 dark:border-yellow-700",
   },
-  indigo: {
-    bg: "bg-indigo-100 dark:bg-indigo-900/30",
-    border: "border-indigo-300 dark:border-indigo-700",
-  },
-  cyan: {
-    bg: "bg-cyan-100 dark:bg-cyan-900/30",
-    border: "border-cyan-300 dark:border-cyan-700",
-  },
 };
 
 type GroupCardProps = {
@@ -82,6 +97,10 @@ export const GroupCard = ({
   const reorderTracks = useReorderTracksMutation(group.id);
   const deleteTrack = useDeleteTrackMutation(group.id);
   const updateTrack = useUpdateTrackMutation(group.id);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   const colorClasses = groupColorClasses[group.color];
 
@@ -93,109 +112,159 @@ export const GroupCard = ({
     deleteTrack.mutate(trackId);
   };
 
-  const handleRenameTrack = (trackId: string) => {
-    const track = tracks.find((t) => t.id === trackId);
-    if (!track) return;
-
-    const nextLabel = window.prompt("Rename track", track.label);
-    if (!nextLabel) return;
-
-    const trimmed = nextLabel.trim();
-    if (!trimmed || trimmed === track.label) return;
-
-    updateTrack.mutate({
-      trackId,
-      data: { label: trimmed },
-    });
+  const handleUpdateTrackColor = (trackId: string, color: TrackColor): void => {
+    console.log("Updating track color:", { trackId, color });
+    updateTrack.mutate(
+      {
+        trackId,
+        data: { color },
+      },
+      {
+        onSuccess: () => {
+          console.log("Track color updated successfully");
+        },
+        onError: (error) => {
+          console.error("Failed to update track color:", error);
+        },
+      }
+    );
   };
 
   return (
-    <div
-      className={`group rounded-lg border-2 ${colorClasses.border} ${colorClasses.bg} px-4 shadow-sm h-full flex flex-col relative`}
-    >
-      <div className="flex flex-col h-full">
-        {/* Header with drag handle */}
-        <div className="mb-0 flex items-center justify-between py-4 drag-handle cursor-move shrink-0">
-          <h3 className="text-lg font-semibold">{group.name}</h3>
-          <div className="flex items-center gap-1">
-            <AddTrackDialog
-              groupId={group.id}
-              trigger={
-                <Button variant="ghost" size="icon-sm">
-                  <span className="text-lg leading-none">+</span>
-                </Button>
-              }
-            />
-            <SearchTrackDialog
-              groupId={group.id}
-              trigger={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  title="Search Spotify track"
-                >
-                  <HugeiconsIcon icon={Search01Icon} className="size-4" />
-                </Button>
-              }
-            />
-            <ImportPlaylistDialog
-              groupId={group.id}
-              trigger={
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  title="Import from playlist"
-                >
-                  <HugeiconsIcon icon={Upload03Icon} className="size-4" />
-                </Button>
-              }
-            />
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onDelete}
-              className="text-muted-foreground hover:text-destructive"
+    <>
+      <EditGroupDialog
+        groupId={group.id}
+        currentName={group.name}
+        currentColor={group.color}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
+      <DeleteGroupDialog
+        groupName={group.name}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={onDelete}
+      />
+      <SearchTrackDialog
+        groupId={group.id}
+        open={searchDialogOpen}
+        onOpenChange={setSearchDialogOpen}
+      />
+      <ImportPlaylistDialog
+        groupId={group.id}
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+      />
+      <div
+        className={`group rounded-lg border-2 ${colorClasses.border} ${colorClasses.bg} px-4 shadow-sm h-full flex flex-col relative`}
+      >
+        <div className="flex flex-col h-full">
+          {/* Header with drag handle */}
+          <div className="mb-0 flex items-center justify-between py-4 drag-handle cursor-move shrink-0">
+            <h3 className="text-lg font-semibold">{group.name}</h3>
+            <div
+              className="no-drag"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
             >
-              <HugeiconsIcon icon={Delete02Icon} className="size-4" />
-            </Button>
-            <div className="p-1.5 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
-              <HugeiconsIcon
-                icon={DragDropHorizontalIcon}
-                className="w-5 h-5 text-muted-foreground"
-              />
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      className="h-auto w-auto p-1 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer [&_svg]:w-5! [&_svg]:h-5!"
+                    >
+                      <HugeiconsIcon
+                        icon={MoreVerticalIcon}
+                        className="text-muted-foreground"
+                      />
+                    </Button>
+                  }
+                />
+                <DropdownMenuContent align="end" className="w-auto min-w-max">
+                  <DropdownMenuItem
+                    onClick={() => setSearchDialogOpen(true)}
+                    className="cursor-pointer"
+                  >
+                    <HugeiconsIcon
+                      icon={Search01Icon}
+                      strokeWidth={2}
+                      className="mr-2"
+                    />
+                    <span>Search</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setImportDialogOpen(true)}
+                    className="cursor-pointer"
+                  >
+                    <HugeiconsIcon
+                      icon={Upload03Icon}
+                      strokeWidth={2}
+                      className="mr-2"
+                    />
+                    <span>Add your playlist</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setEditDialogOpen(true)}
+                    className="cursor-pointer"
+                  >
+                    <HugeiconsIcon
+                      icon={PencilEdit02Icon}
+                      strokeWidth={2}
+                      className="mr-2"
+                    />
+                    <span>Edit group</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setDeleteDialogOpen(true)}
+                    variant="destructive"
+                    className="cursor-pointer"
+                  >
+                    <HugeiconsIcon
+                      icon={Delete02Icon}
+                      strokeWidth={2}
+                      className="mr-2"
+                    />
+                    <span>Delete group</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
+          </div>
+
+          {/* Tracks content */}
+          <div className="flex-1 min-h-0">
+            <ScrollArea className="h-full">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
+                  Loading tracks…
+                </div>
+              ) : (
+                <SortableTracks
+                  groupId={group.id}
+                  tracks={tracks}
+                  groupColor={group.color}
+                  onReorder={handleReorder}
+                  onDelete={handleDeleteTrack}
+                  onUpdateColor={handleUpdateTrackColor}
+                  onDragStart={onSquareDragStart}
+                  onDragEnd={onSquareDragEnd}
+                />
+              )}
+            </ScrollArea>
           </div>
         </div>
 
-        {/* Tracks content */}
-        <div className="flex-1 min-h-0">
-          <ScrollArea className="h-full">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
-                Loading tracks…
-              </div>
-            ) : (
-              <SortableTracks
-                groupId={group.id}
-                tracks={tracks}
-                onReorder={handleReorder}
-                onDelete={handleDeleteTrack}
-                onRename={handleRenameTrack}
-                onDragStart={onSquareDragStart}
-                onDragEnd={onSquareDragEnd}
-              />
-            )}
-          </ScrollArea>
+        {/* Custom resize icon overlay */}
+        <div className="absolute bottom-2 right-2 pointer-events-none">
+          <HugeiconsIcon
+            icon={SquareArrowDiagonal02Icon}
+            className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors"
+          />
         </div>
       </div>
-
-      {/* Custom resize icon overlay */}
-      <div className="absolute bottom-2 right-2 pointer-events-none">
-        <HugeiconsIcon
-          icon={SquareArrowDiagonal02Icon}
-          className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors"
-        />
-      </div>
-    </div>
+    </>
   );
 };

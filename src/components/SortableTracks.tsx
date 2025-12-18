@@ -13,7 +13,12 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Cancel01Icon, Edit02Icon, PlayIcon } from "@hugeicons/core-free-icons";
+import {
+  PaintBoardIcon,
+  PlayIcon,
+  RemoveSquareIcon,
+  Tick02Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import {
@@ -21,12 +26,16 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { TRACK_COLORS } from "@/features/groups/types";
 import { useSpotifyPlayer } from "@/features/spotify/useSpotifyPlayer";
 import { cn } from "@/lib/utils";
 
-import type { Track, TrackColor } from "@/features/groups/types";
+import type { GroupColor, Track, TrackColor } from "@/features/groups/types";
 
 const colorClasses: Record<TrackColor, string> = {
   blue: "bg-blue-500",
@@ -39,6 +48,18 @@ const colorClasses: Record<TrackColor, string> = {
   orange: "bg-orange-500",
   teal: "bg-teal-500",
   cyan: "bg-cyan-500",
+};
+
+/**
+ * Maps GroupColor to TrackColor (most colors match, use blue as fallback)
+ */
+const mapGroupColorToTrackColor = (groupColor: GroupColor): TrackColor => {
+  // Most group colors match track colors directly
+  if (TRACK_COLORS.includes(groupColor as TrackColor)) {
+    return groupColor as TrackColor;
+  }
+  // Fallback to blue if somehow there's a mismatch
+  return "blue";
 };
 
 /**
@@ -68,11 +89,17 @@ const addHyphensToLongWords = (text: string, maxLength = 8): string => {
 
 type SortableTrackProps = {
   track: Track;
+  defaultColor: TrackColor;
   onDelete?: (trackId: string) => void;
-  onRename?: (trackId: string) => void;
+  onUpdateColor?: (trackId: string, color: TrackColor) => void;
 };
 
-const SortableTrack = ({ track, onDelete, onRename }: SortableTrackProps) => {
+const SortableTrack = ({
+  track,
+  defaultColor,
+  onDelete,
+  onUpdateColor,
+}: SortableTrackProps) => {
   const {
     attributes,
     listeners,
@@ -89,18 +116,22 @@ const SortableTrack = ({ track, onDelete, onRename }: SortableTrackProps) => {
     opacity: isDragging ? 0.5 : 1,
   };
 
+  // Use track.color if set, otherwise use defaultColor from group
+  // Note: track.color might be undefined for old tracks that don't have this field
+  const trackColor = track.color ?? defaultColor;
+
   const handleDelete = () => {
     onDelete?.(track.id);
-  };
-
-  const handleRename = () => {
-    onRename?.(track.id);
   };
 
   const handlePlay = () => {
     if (track.spotifyTrackId && isReady) {
       play(track.spotifyTrackId);
     }
+  };
+
+  const handleColorChange = (color: TrackColor) => {
+    onUpdateColor?.(track.id, color);
   };
 
   const canPlay = !!track.spotifyTrackId && isReady;
@@ -115,11 +146,13 @@ const SortableTrack = ({ track, onDelete, onRename }: SortableTrackProps) => {
           {...listeners}
           onClick={canPlay ? handlePlay : undefined}
           className={cn(
-            colorClasses[track.color],
+            colorClasses[trackColor],
             "group/track relative w-20 h-20 rounded-md flex items-center justify-center text-white font-semibold shadow-sm hover:shadow-md transition-shadow p-1",
-            canPlay
-              ? "cursor-pointer hover:scale-105"
-              : "cursor-grab active:cursor-grabbing"
+            isDragging
+              ? "cursor-grabbing"
+              : canPlay
+                ? "cursor-pointer hover:scale-105"
+                : "cursor-pointer"
           )}
           title={
             canPlay
@@ -155,34 +188,63 @@ const SortableTrack = ({ track, onDelete, onRename }: SortableTrackProps) => {
               handlePlay();
             }}
           >
-            <HugeiconsIcon icon={PlayIcon} className="mr-2 size-4" />
+            <HugeiconsIcon icon={PlayIcon} strokeWidth={2} className="mr-2" />
             <span>Play</span>
           </ContextMenuItem>
         )}
-        {canPlay && (onRename || onDelete) && <ContextMenuSeparator />}
-        {onRename && (
-          <ContextMenuItem
-            onSelect={(event) => {
-              event.preventDefault();
-              handleRename();
-            }}
-          >
-            <HugeiconsIcon icon={Edit02Icon} className="mr-2 size-4" />
-            <span>Rename</span>
-          </ContextMenuItem>
+        {canPlay && (onUpdateColor || onDelete) && <ContextMenuSeparator />}
+        {onUpdateColor && (
+          <ContextMenuSub>
+            <ContextMenuSubTrigger>
+              <HugeiconsIcon
+                icon={PaintBoardIcon}
+                strokeWidth={2}
+                className="mr-2"
+              />
+              <span>Color</span>
+            </ContextMenuSubTrigger>
+            <ContextMenuSubContent>
+              {TRACK_COLORS.map((color) => (
+                <ContextMenuItem
+                  key={color}
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    handleColorChange(color);
+                  }}
+                >
+                  <div
+                    className={cn("w-4 h-4 rounded-full", colorClasses[color])}
+                  />
+                  <span className="capitalize">{color}</span>
+                  {trackColor === color && (
+                    <HugeiconsIcon
+                      icon={Tick02Icon}
+                      strokeWidth={2}
+                      className="ml-auto"
+                    />
+                  )}
+                </ContextMenuItem>
+              ))}
+            </ContextMenuSubContent>
+          </ContextMenuSub>
         )}
         {onDelete && (
           <>
-            {onRename && <ContextMenuSeparator />}
+            {onUpdateColor && <ContextMenuSeparator />}
             <ContextMenuItem
               variant="destructive"
+              className="gap-0"
               onSelect={(event) => {
                 event.preventDefault();
                 handleDelete();
               }}
             >
-              <HugeiconsIcon icon={Cancel01Icon} className="mr-2 size-4" />
-              <span>Remove</span>
+              <HugeiconsIcon
+                icon={RemoveSquareIcon}
+                strokeWidth={2}
+                className="mr-2"
+              />
+              <span>Remove track</span>
             </ContextMenuItem>
           </>
         )}
@@ -194,9 +256,10 @@ const SortableTrack = ({ track, onDelete, onRename }: SortableTrackProps) => {
 type SortableTracksProps = {
   groupId: string;
   tracks: Track[];
+  groupColor: GroupColor;
   onReorder?: (trackIds: string[]) => void;
   onDelete?: (trackId: string) => void;
-  onRename?: (trackId: string) => void;
+  onUpdateColor?: (trackId: string, color: TrackColor) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
 };
@@ -204,9 +267,10 @@ type SortableTracksProps = {
 export const SortableTracks = ({
   groupId,
   tracks,
+  groupColor,
   onReorder,
   onDelete,
-  onRename,
+  onUpdateColor,
   onDragStart,
   onDragEnd,
 }: SortableTracksProps) => {
@@ -218,6 +282,9 @@ export const SortableTracks = ({
       },
     })
   );
+
+  // Map group color to track color for default
+  const defaultTrackColor = mapGroupColorToTrackColor(groupColor);
 
   const handleDragStart = () => {
     onDragStart?.();
@@ -260,8 +327,9 @@ export const SortableTracks = ({
             <SortableTrack
               key={`${groupId}-${track.id}-${index}`}
               track={track}
+              defaultColor={defaultTrackColor}
               onDelete={onDelete}
-              onRename={onRename}
+              onUpdateColor={onUpdateColor}
             />
           ))}
         </div>

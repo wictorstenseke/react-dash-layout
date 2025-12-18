@@ -1,17 +1,18 @@
 import type { Timestamp } from "firebase/firestore";
 
-// Available colors for groups and tracks
+// Available colors for groups and tracks - distinct colors only
 export const GROUP_COLORS = [
+  "gray-light",
+  "gray",
+  "gray-dark",
   "blue",
   "green",
   "purple",
   "orange",
   "pink",
-  "teal",
   "red",
   "yellow",
-  "indigo",
-  "cyan",
+  "teal",
 ] as const;
 
 export type GroupColor = (typeof GROUP_COLORS)[number];

@@ -72,7 +72,6 @@ export const SpotifyConnectButton = ({
     undefined
   );
   const buttonGroupRef = React.useRef<HTMLDivElement>(null);
-  const triggerButtonRef = React.useRef<HTMLButtonElement>(null);
 
   React.useEffect(() => {
     if (menuOpen && buttonGroupRef.current) {
@@ -89,11 +88,6 @@ export const SpotifyConnectButton = ({
     }
     return "Connect Spotify";
   })();
-
-  const handleLabelClick = () => {
-    // Programmatically click the trigger button to ensure consistent positioning
-    triggerButtonRef.current?.click();
-  };
 
   if (!isConnected) {
     return (
@@ -118,30 +112,28 @@ export const SpotifyConnectButton = ({
   }
 
   return (
-    <div ref={buttonGroupRef} className="inline-flex">
-      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-        <ButtonGroup aria-label="Spotify connection actions">
-          <Button
-            type="button"
-            variant="outline"
-            size={size}
-            className={cn("gap-1 pl-2 pr-2.5 border border-green-500/50!")}
-            onClick={handleLabelClick}
-            aria-label="Spotify connected"
-          >
-            <HugeiconsIcon
-              icon={SpotifyIcon}
-              strokeWidth={2}
-              className="text-green-500"
-            />
-            <span className="hidden sm:inline">{primaryLabel}</span>
-            <span className="sm:hidden">Connected</span>
-          </Button>
-
-          <DropdownMenuTrigger
-            render={
+    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+      <DropdownMenuTrigger
+        render={
+          <div ref={buttonGroupRef} className="inline-flex">
+            <ButtonGroup aria-label="Spotify connection actions">
               <Button
-                ref={triggerButtonRef}
+                type="button"
+                variant="outline"
+                size={size}
+                className={cn("gap-1 pl-2 pr-2.5 border border-green-500/50!")}
+                aria-label="Spotify connected"
+              >
+                <HugeiconsIcon
+                  icon={SpotifyIcon}
+                  strokeWidth={2}
+                  className="text-green-500"
+                />
+                <span className="hidden sm:inline">{primaryLabel}</span>
+                <span className="sm:hidden">Connected</span>
+              </Button>
+
+              <Button
                 type="button"
                 variant="outline"
                 size="icon-sm"
@@ -150,100 +142,92 @@ export const SpotifyConnectButton = ({
               >
                 <HugeiconsIcon icon={ArrowDown01Icon} strokeWidth={2} />
               </Button>
-            }
-          />
-        </ButtonGroup>
+            </ButtonGroup>
+          </div>
+        }
+      />
 
-        <DropdownMenuContent
-          align="start"
-          sideOffset={6}
-          style={menuWidth ? { width: `${menuWidth}px` } : undefined}
+      <DropdownMenuContent
+        align="start"
+        sideOffset={6}
+        style={menuWidth ? { width: `${menuWidth}px` } : undefined}
+      >
+        <DropdownMenuItem onClick={handleConnect} disabled={isPending}>
+          <HugeiconsIcon icon={ArrowReloadHorizontalIcon} strokeWidth={2} />
+          Reconnect Spotify
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={handleDisconnectClick}
+          disabled={isDisconnecting}
+          variant="destructive"
         >
-          <DropdownMenuItem onClick={handleConnect} disabled={isPending}>
-            Reconnect Spotify
-            <HugeiconsIcon
-              icon={ArrowReloadHorizontalIcon}
-              strokeWidth={2}
-              className="ml-auto"
-            />
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={handleDisconnectClick}
-            disabled={isDisconnecting}
-            variant="destructive"
+          <HugeiconsIcon icon={Unlink04Icon} strokeWidth={2} />
+          Disconnect
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setConfirmed(false);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">
+              Disconnect Spotify Account
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to disconnect your Spotify account? This
+              will remove all access to your Spotify data and you'll need to
+              reconnect to use Spotify features again.
+            </DialogDescription>
+          </DialogHeader>
+          <Label
+            htmlFor="confirm-disconnect"
+            className="hover:bg-accent/50 flex items-start gap-3 rounded-lg border p-3 has-aria-checked:border-destructive has-aria-checked:bg-destructive/10 dark:has-aria-checked:border-destructive dark:has-aria-checked:bg-destructive/20 cursor-pointer"
           >
-            Disconnect
-            <HugeiconsIcon
-              icon={Unlink04Icon}
-              strokeWidth={2}
-              className="ml-auto"
+            <Checkbox
+              id="confirm-disconnect"
+              checked={confirmed}
+              onCheckedChange={(checked) => setConfirmed(checked === true)}
+              className="data-[state=checked]:border-destructive data-[state=checked]:bg-destructive data-[state=checked]:text-destructive-foreground dark:data-[state=checked]:border-destructive dark:data-[state=checked]:bg-destructive"
             />
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-
-        <Dialog
-          open={dialogOpen}
-          onOpenChange={(open) => {
-            setDialogOpen(open);
-            if (!open) {
-              setConfirmed(false);
-            }
-          }}
-        >
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-destructive">
-                Disconnect Spotify Account
-              </DialogTitle>
-              <DialogDescription>
-                Are you sure you want to disconnect your Spotify account? This
-                will remove all access to your Spotify data and you'll need to
-                reconnect to use Spotify features again.
-              </DialogDescription>
-            </DialogHeader>
-            <Label
-              htmlFor="confirm-disconnect"
-              className="hover:bg-accent/50 flex items-start gap-3 rounded-lg border p-3 has-aria-checked:border-destructive has-aria-checked:bg-destructive/10 dark:has-aria-checked:border-destructive dark:has-aria-checked:bg-destructive/20 cursor-pointer"
+            <div className="grid gap-1.5 font-normal">
+              <p className="text-sm leading-none font-medium">
+                I understand the action of disconnect
+              </p>
+              <p className="text-muted-foreground text-sm">
+                This will permanently remove your Spotify connection and you'll
+                need to reconnect to use Spotify features again.
+              </p>
+            </div>
+          </Label>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDialogOpen(false);
+                setConfirmed(false);
+              }}
+              disabled={isDisconnecting}
             >
-              <Checkbox
-                id="confirm-disconnect"
-                checked={confirmed}
-                onCheckedChange={(checked) => setConfirmed(checked === true)}
-                className="data-[state=checked]:border-destructive data-[state=checked]:bg-destructive data-[state=checked]:text-destructive-foreground dark:data-[state=checked]:border-destructive dark:data-[state=checked]:bg-destructive"
-              />
-              <div className="grid gap-1.5 font-normal">
-                <p className="text-sm leading-none font-medium">
-                  I understand the action of disconnect
-                </p>
-                <p className="text-muted-foreground text-sm">
-                  This will permanently remove your Spotify connection and
-                  you'll need to reconnect to use Spotify features again.
-                </p>
-              </div>
-            </Label>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setDialogOpen(false);
-                  setConfirmed(false);
-                }}
-                disabled={isDisconnecting}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleDisconnectConfirm}
-                disabled={!confirmed || isDisconnecting}
-              >
-                {isDisconnecting ? "Disconnecting…" : "Disconnect"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </DropdownMenu>
-    </div>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDisconnectConfirm}
+              disabled={!confirmed || isDisconnecting}
+            >
+              {isDisconnecting ? "Disconnecting…" : "Disconnect"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </DropdownMenu>
   );
 };
