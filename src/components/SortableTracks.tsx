@@ -41,6 +41,31 @@ const colorClasses: Record<TrackColor, string> = {
   cyan: "bg-cyan-500",
 };
 
+/**
+ * Inserts hyphens in long words to allow breaking with hyphens
+ */
+const addHyphensToLongWords = (text: string, maxLength = 8): string => {
+  return text
+    .split(/(\s+)/)
+    .map((word) => {
+      if (word.trim().length > maxLength && /^\S+$/.test(word)) {
+        // Insert soft hyphens every few characters for long words
+        const chars = word.split("");
+        const result: string[] = [];
+        for (let i = 0; i < chars.length; i++) {
+          result.push(chars[i]);
+          // Insert hyphen opportunity every 4-5 characters, but not at the end
+          if (i > 0 && i < chars.length - 1 && (i + 1) % 4 === 0) {
+            result.push("\u00AD"); // Soft hyphen (invisible, allows breaking)
+          }
+        }
+        return result.join("");
+      }
+      return word;
+    })
+    .join("");
+};
+
 type SortableTrackProps = {
   track: Track;
   onDelete?: (trackId: string) => void;
@@ -91,7 +116,7 @@ const SortableTrack = ({ track, onDelete, onRename }: SortableTrackProps) => {
           onClick={canPlay ? handlePlay : undefined}
           className={cn(
             colorClasses[track.color],
-            "group/track relative w-18 h-18 rounded-md flex items-center justify-center text-white font-semibold shadow-sm hover:shadow-md transition-shadow",
+            "group/track relative w-20 h-20 rounded-md flex items-center justify-center text-white font-semibold shadow-sm hover:shadow-md transition-shadow p-1",
             canPlay
               ? "cursor-pointer hover:scale-105"
               : "cursor-grab active:cursor-grabbing"
@@ -103,9 +128,22 @@ const SortableTrack = ({ track, onDelete, onRename }: SortableTrackProps) => {
                 ? "Player not ready"
                 : undefined
           }
+          lang="en"
         >
-          <span className="text-xs text-center px-1 truncate max-w-full">
-            {track.label}
+          <span
+            className="text-xs text-center leading-tight overflow-hidden block"
+            style={{
+              wordBreak: "break-word",
+              overflowWrap: "break-word",
+              display: "-webkit-box",
+              WebkitLineClamp: "5",
+              WebkitBoxOrient: "vertical",
+              lineClamp: 5,
+              padding: 0,
+              margin: 0,
+            }}
+          >
+            {addHyphensToLongWords(track.label)}
           </span>
         </div>
       </ContextMenuTrigger>
@@ -218,9 +256,9 @@ export const SortableTracks = ({
         strategy={rectSortingStrategy}
       >
         <div className="flex flex-wrap gap-2 justify-center">
-          {tracks.map((track) => (
+          {tracks.map((track, index) => (
             <SortableTrack
-              key={track.id}
+              key={`${groupId}-${track.id}-${index}`}
               track={track}
               onDelete={onDelete}
               onRename={onRename}

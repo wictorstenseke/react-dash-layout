@@ -1,13 +1,25 @@
 import type { ReactNode } from "react";
 
-import { Link, useNavigate } from "@tanstack/react-router";
+import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+
+import { Link } from "@tanstack/react-router";
 
 import { PlayerStatus } from "@/components/PlayerStatus";
+import { ProfileMenu } from "@/components/ProfileMenu";
 import { SpotifyConnectButton } from "@/components/SpotifyConnectButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/features/auth/AuthProvider";
-import { signOutUser } from "@/features/auth/authService";
 
 interface AppShellProps {
   children: ReactNode;
@@ -15,14 +27,6 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const { isAuthed, loading } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    const result = await signOutUser();
-    if (result.success) {
-      navigate({ to: "/login" });
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,22 +80,54 @@ export function AppShell({ children }: AppShellProps) {
             </nav>
           </div>
           <div className="flex items-center gap-2">
-            {!loading && isAuthed && (
+            {!loading && isAuthed ? (
               <>
                 <SpotifyConnectButton variant="outline" size="sm" />
                 <PlayerStatus />
+                <ButtonGroup aria-label="Example split button">
+                  <Button variant="outline" size="sm">
+                    Follow
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          variant="outline"
+                          size="icon-sm"
+                          aria-label="Open example menu"
+                        >
+                          <HugeiconsIcon
+                            icon={ArrowDown01Icon}
+                            strokeWidth={2}
+                          />
+                        </Button>
+                      }
+                    />
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-auto min-w-max [--radius:1rem]"
+                    >
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem>Mute Conversation</DropdownMenuItem>
+                        <DropdownMenuItem>Mark as Read</DropdownMenuItem>
+                        <DropdownMenuItem>Report Conversation</DropdownMenuItem>
+                        <DropdownMenuItem>Block User</DropdownMenuItem>
+                        <DropdownMenuItem>Share Conversation</DropdownMenuItem>
+                        <DropdownMenuItem>Copy Conversation</DropdownMenuItem>
+                      </DropdownMenuGroup>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem variant="destructive">
+                          Delete Conversation
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </ButtonGroup>
+                <ProfileMenu />
               </>
-            )}
-            <ThemeToggle />
-            {!loading && isAuthed && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSignOut}
-                className="text-sm"
-              >
-                Sign out
-              </Button>
+            ) : (
+              <ThemeToggle />
             )}
           </div>
         </div>
