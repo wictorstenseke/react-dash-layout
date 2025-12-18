@@ -13,13 +13,29 @@ type SpotifyUser = {
   email: string;
 };
 
-// Allowed origins for redirects to prevent open redirect attacks
-const ALLOWED_ORIGINS = [
+// Static allowed origins for redirects to prevent open redirect attacks
+const STATIC_ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "https://spotdash-dbaf2.web.app",
   "https://spotdash-dbaf2.firebaseapp.com",
 ];
+
+// Derive frontend origin from FRONTEND_URL if provided (for GitHub Pages / prod)
+const frontendEnv = process.env.FRONTEND_URL;
+const frontendOrigin =
+  frontendEnv &&
+  (() => {
+    try {
+      return new URL(frontendEnv).origin;
+    } catch {
+      return null;
+    }
+  })();
+
+const ALLOWED_ORIGINS = frontendOrigin
+  ? [...STATIC_ALLOWED_ORIGINS, frontendOrigin]
+  : STATIC_ALLOWED_ORIGINS;
 
 /**
  * Validate redirect URL to prevent open redirect attacks
@@ -143,9 +159,10 @@ export const spotifyCallback = onRequest(
         );
 
       // Redirect back to frontend (validated)
-      const defaultOrigin = ALLOWED_ORIGINS[0];
+      const defaultOrigin = frontendOrigin || ALLOWED_ORIGINS[0];
       const frontendUrl = redirectBackUrl || process.env.FRONTEND_URL || "/";
-      const baseOrigin = request.headers.origin || defaultOrigin;
+      // Spotify callback requests usually have no Origin header, so use defaultOrigin
+      const baseOrigin = defaultOrigin;
 
       const successUrl = new URL(frontendUrl, baseOrigin);
       successUrl.searchParams.set("spotify", "connected");
@@ -159,9 +176,9 @@ export const spotifyCallback = onRequest(
       console.error("Spotify callback error:", error);
 
       // Redirect to frontend with error (validated)
-      const defaultOrigin = ALLOWED_ORIGINS[0];
+      const defaultOrigin = frontendOrigin || ALLOWED_ORIGINS[0];
       const frontendUrl = process.env.FRONTEND_URL || "/";
-      const baseOrigin = request.headers.origin || defaultOrigin;
+      const baseOrigin = defaultOrigin;
 
       const errorUrl = new URL(frontendUrl, baseOrigin);
       errorUrl.searchParams.set("spotify", "error");
