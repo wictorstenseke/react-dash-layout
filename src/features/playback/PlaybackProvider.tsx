@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 
-import { useSpotifyPlayer } from "@/features/spotify/useSpotifyPlayer";
+import { useSpotifyPlayer } from "@/features/spotify/SpotifyPlayerProvider";
 
 type PlaybackContextValue = {
   selectedTrackId: string | null;

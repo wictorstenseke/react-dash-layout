@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 import {
   DndContext,
   closestCenter,
@@ -33,7 +35,7 @@ import {
 } from "@/components/ui/context-menu";
 import { TRACK_COLORS } from "@/features/groups/types";
 import { usePlayback } from "@/features/playback/PlaybackProvider";
-import { useSpotifyPlayer } from "@/features/spotify/useSpotifyPlayer";
+import { useSpotifyPlayer } from "@/features/spotify/SpotifyPlayerProvider";
 import { cn } from "@/lib/utils";
 
 import type { GroupColor, Track, TrackColor } from "@/features/groups/types";
@@ -113,6 +115,23 @@ const SortableTrack = ({
   const { selectTrack, playTrack, selectedTrackId, currentTrackId, isPlaying } =
     usePlayback();
 
+  // Track pointer position to detect if it was a click (no movement) vs drag
+  const pointerDownRef = useRef<{ x: number; y: number; time: number } | null>(
+    null
+  );
+  const dragStartedRef = useRef(false);
+
+  // Track when drag actually starts
+  useEffect(() => {
+    if (isDragging) {
+      dragStartedRef.current = true;
+    } else {
+      // Reset when drag ends
+      dragStartedRef.current = false;
+      pointerDownRef.current = null;
+    }
+  }, [isDragging]);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -127,15 +146,47 @@ const SortableTrack = ({
     onDelete?.(track.id);
   };
 
-  const handleClick = () => {
-    if (track.spotifyTrackId && isReady) {
+  const handlePointerDown = (e: React.PointerEvent) => {
+    pointerDownRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      time: Date.now(),
+    };
+    dragStartedRef.current = false;
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!pointerDownRef.current || dragStartedRef.current || isDragging) {
+      pointerDownRef.current = null;
+      return;
+    }
+
+    const deltaX = Math.abs(e.clientX - pointerDownRef.current.x);
+    const deltaY = Math.abs(e.clientY - pointerDownRef.current.y);
+    const deltaTime = Date.now() - pointerDownRef.current.time;
+    const moved = deltaX > 5 || deltaY > 5; // Allow small movement for click
+    const isQuickClick = deltaTime < 300; // Click should be quick
+
+    if (!moved && isQuickClick && track.spotifyTrackId && isReady) {
+      // Single click - select track
       selectTrack(track.spotifyTrackId);
     }
+
+    pointerDownRef.current = null;
   };
 
   const handleDoubleClick = () => {
-    if (track.spotifyTrackId && isReady) {
+    if (track.spotifyTrackId && isReady && !isDragging) {
       playTrack(track.spotifyTrackId);
+    }
+  };
+
+  // Handle pointer down for both drag and click detection
+  const handlePointerDownWithDrag = (e: React.PointerEvent) => {
+    handlePointerDown(e);
+    // Call original drag listener if it exists
+    if (listeners?.onPointerDown) {
+      listeners.onPointerDown(e);
     }
   };
 
@@ -162,7 +213,8 @@ const SortableTrack = ({
           style={style}
           {...attributes}
           {...listeners}
-          onClick={canPlay ? handleClick : undefined}
+          onPointerDown={handlePointerDownWithDrag}
+          onPointerUp={canPlay ? handlePointerUp : undefined}
           onDoubleClick={canPlay ? handleDoubleClick : undefined}
           className={cn(
             colorClasses[trackColor],

@@ -15,6 +15,7 @@ import ReactGridLayout, {
 
 import { CommandPalette } from "@/components/CommandPalette";
 import { GroupCard } from "@/components/GroupCard";
+import { PlayerStatus } from "@/components/PlayerStatus";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -26,7 +27,7 @@ import {
 } from "@/components/ui/empty";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { usePlayback } from "@/features/playback/PlaybackProvider";
-import { useSpotifyPlayer } from "@/features/spotify/useSpotifyPlayer";
+import { useSpotifyPlayer } from "@/features/spotify/SpotifyPlayerProvider";
 import {
   useCreateGroupMutation,
   useDeleteGroupMutation,
@@ -336,6 +337,7 @@ export const App = () => {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <PlayerStatus />
               <Button
                 variant="outline"
                 size="sm"

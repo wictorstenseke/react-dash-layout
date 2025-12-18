@@ -6,6 +6,8 @@ import { randomBytes, createHash } from "crypto";
 const SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize";
 const SCOPES = [
   "playlist-read-private",
+  "user-read-private", // Required to get user's product/subscription type
+  "user-read-email", // Required by Web Playback SDK
   "user-read-playback-state",
   "user-modify-playback-state",
   "streaming",
