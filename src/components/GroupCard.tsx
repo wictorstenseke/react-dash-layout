@@ -117,16 +117,12 @@ export const GroupCard = ({
   };
 
   const handleUpdateTrackColor = (trackId: string, color: TrackColor): void => {
-    console.log("handleUpdateTrackColor called:", { trackId, color });
     updateTrack.mutate(
       {
         trackId,
         data: { color },
       },
       {
-        onSuccess: () => {
-          console.log("Track color updated successfully");
-        },
         onError: (error) => {
           console.error("Failed to update track color:", error);
         },
