@@ -13,7 +13,7 @@ type PlaybackContextValue = {
   currentTrackId: string | null;
   isPlaying: boolean;
   selectTrack: (trackId: string) => void;
-  playTrack: (trackId: string) => Promise<void>;
+  playTrack: (trackId: string, startTimeMs?: number) => Promise<void>;
   pause: () => Promise<void>;
   togglePlayPause: () => Promise<void>;
 };
@@ -30,6 +30,7 @@ export const PlaybackProvider = ({ children }: PlaybackProviderProps) => {
     play,
     pause: spotifyPause,
     resume,
+    seek,
     currentTrack,
     isPlaying,
     isPaused,
@@ -43,11 +44,24 @@ export const PlaybackProvider = ({ children }: PlaybackProviderProps) => {
   }, []);
 
   const playTrack = useCallback(
-    async (trackId: string) => {
+    async (trackId: string, startTimeMs?: number) => {
       setSelectedTrackId(trackId);
       await play(trackId);
+
+      // If startTimeMs is provided, seek to that position after a short delay
+      // to ensure playback has started
+      if (startTimeMs !== undefined && startTimeMs > 0) {
+        // Wait a bit for playback to start, then seek
+        setTimeout(async () => {
+          try {
+            await seek(startTimeMs);
+          } catch (err) {
+            console.warn("Failed to seek to start time:", err);
+          }
+        }, 500);
+      }
     },
-    [play]
+    [play, seek]
   );
 
   const pause = useCallback(async () => {
