@@ -86,13 +86,13 @@ export const CommandPalette = ({
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((prev) => !prev);
+        setOpen(!open);
       }
     };
 
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
-  }, [setOpen]);
+  }, [open, setOpen]);
 
   // Handle cmd+n shortcut to create group
   useEffect(() => {
