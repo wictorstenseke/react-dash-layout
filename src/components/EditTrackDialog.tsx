@@ -1,4 +1,4 @@
-import { useState, type FormEvent, useEffect } from "react";
+import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -10,8 +10,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import type { Track } from "@/features/groups/types";
 import { useUpdateTrackMutation } from "@/hooks/useTracks";
+
+import type { Track } from "@/features/groups/types";
 
 type EditTrackDialogProps = {
   groupId: string;
@@ -33,18 +34,12 @@ export const EditTrackDialog = ({
   open,
   onOpenChange,
 }: EditTrackDialogProps) => {
+  // Initialize state with track's startTimeMs - using key prop on Dialog to reset when track changes
   const [startTimeMs, setStartTimeMs] = useState(track.startTimeMs ?? 0);
   const updateTrack = useUpdateTrackMutation(groupId);
 
   const durationMs = track.durationMs ?? 0;
   const maxStartTime = Math.max(0, durationMs - 1000); // Don't allow starting in last second
-
-  // Reset form when dialog opens with new track
-  useEffect(() => {
-    if (open) {
-      setStartTimeMs(track.startTimeMs ?? 0);
-    }
-  }, [open, track.startTimeMs]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -72,7 +67,7 @@ export const EditTrackDialog = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} key={track.id}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Track</DialogTitle>
