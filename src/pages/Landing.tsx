@@ -8,20 +8,16 @@ export function Landing() {
       {/* Hero Section */}
       <div className="flex max-w-4xl flex-col items-center space-y-6 text-center">
         <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
-          Music Dashboard
+          Trackboard
         </h1>
         <p className="max-w-2xl text-lg text-muted-foreground sm:text-xl">
-          Organize your music into themed groups with our customizable
-          drag-and-drop dashboard interface. Find the right song at the right
-          moment. Spotify integration coming soon.
+          Organize your Spotify tracks into themed groups with our customizable
+          drag-and-drop interface. Find the right song at the right moment with
+          seamless Spotify integration.
         </p>
         <div className="flex flex-col gap-4 sm:flex-row">
-          <Button
-            size="lg"
-            render={<Link to="/example" />}
-            nativeButton={false}
-          >
-            Try the Demo
+          <Button size="lg" render={<Link to="/app" />} nativeButton={false}>
+            Get Started
           </Button>
           <Button
             size="lg"
@@ -49,15 +45,17 @@ export function Landing() {
           <div className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
             <h3 className="mb-2 font-semibold">Spotify Integration</h3>
             <p className="text-sm text-muted-foreground">
-              Connect to Spotify's Web API to fetch your songs, playlists, and
-              music library. Coming in the near future.
+              Connect to Spotify and import your playlists, search for tracks,
+              and play music directly from your browser. Full Web Playback SDK
+              support included.
             </p>
           </div>
           <div className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
             <h3 className="mb-2 font-semibold">Themed Organization</h3>
             <p className="text-sm text-muted-foreground">
-              Organize your music into custom themed groups. Create categories
-              that make sense for your listening habits.
+              Organize your tracks into custom themed groups. Create categories
+              for moods, activities, or any theme that fits your listening
+              style.
             </p>
           </div>
           <div className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
@@ -75,17 +73,18 @@ export function Landing() {
             </p>
           </div>
           <div className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
-            <h3 className="mb-2 font-semibold">Sortable Items</h3>
+            <h3 className="mb-2 font-semibold">Sortable Tracks</h3>
             <p className="text-sm text-muted-foreground">
-              Reorder items within each themed group using drag-and-drop. Find
-              the perfect arrangement for any moment.
+              Reorder tracks within each group using drag-and-drop. Arrange your
+              playlists exactly how you want them.
             </p>
           </div>
           <div className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
-            <h3 className="mb-2 font-semibold">Persistent State</h3>
+            <h3 className="mb-2 font-semibold">Playback Control</h3>
             <p className="text-sm text-muted-foreground">
-              Your layout and song arrangements are automatically saved. Your
-              organization persists across sessions.
+              Play, pause, and control your Spotify tracks directly from
+              Trackboard. Smooth fade in/out transitions for a better listening
+              experience.
             </p>
           </div>
         </div>
@@ -126,10 +125,10 @@ export function Landing() {
               3
             </div>
             <div>
-              <h3 className="mb-1 font-semibold">Sort Items</h3>
+              <h3 className="mb-1 font-semibold">Sort Tracks</h3>
               <p className="text-sm text-muted-foreground">
-                Drag any item within a themed group to reorder them. Changes are
-                saved automatically so you can find what you need quickly.
+                Drag any track within a group to reorder them. Changes are saved
+                automatically so you can find what you need quickly.
               </p>
             </div>
           </div>

@@ -210,12 +210,13 @@ export const useSpotifyPlayerInternal = () => {
       }
       initializedTokenRef.current = undefined;
     };
-  }, [isLinked, isPremium, accessToken, user?.uid]); // Use accessToken string instead of tokenData object
+  }, [isLinked, isPremium, accessToken, user?.uid, getToken]); // Use accessToken string instead of tokenData object
 
   // Fade volume utility function
   const fadeVolume = useCallback(
     async (
-      playerInstance: any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      playerInstance: any, // Spotify.Player type from SDK
       fromVolume: number,
       toVolume: number,
       durationMs: number = 1000

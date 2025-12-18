@@ -282,7 +282,7 @@ export const App = () => {
   if (isLoading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="text-muted-foreground">Loading your dashboard…</div>
+        <div className="text-muted-foreground">Loading your Trackboard…</div>
       </div>
     );
   }
@@ -307,7 +307,7 @@ export const App = () => {
                 className="size-12"
               />
             </EmptyMedia>
-            <EmptyTitle>Welcome to your Dashboard</EmptyTitle>
+            <EmptyTitle>Welcome to Trackboard</EmptyTitle>
             <EmptyDescription>
               Create a group to organize your tracks into sets, playlists, or
               categories.
@@ -337,7 +337,7 @@ export const App = () => {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+              <h1 className="text-2xl font-bold tracking-tight">Trackboard</h1>
               <p className="text-sm text-muted-foreground">
                 {groups.length} group{groups.length !== 1 ? "s" : ""}
               </p>
