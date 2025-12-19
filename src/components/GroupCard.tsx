@@ -251,6 +251,7 @@ export const GroupCard = ({
                   onUpdateColor={handleUpdateTrackColor}
                   onDragStart={onSquareDragStart}
                   onDragEnd={onSquareDragEnd}
+                  onAddTrack={() => setSearchDialogOpen(true)}
                 />
               )}
             </ScrollArea>

@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   Add01Icon,
-  ArrowReloadHorizontalIcon,
   PauseIcon,
   PlayIcon,
   Playlist01Icon,
@@ -16,6 +15,7 @@ import ReactGridLayout, {
 import { CommandPalette } from "@/components/CommandPalette";
 import { GroupCard } from "@/components/GroupCard";
 import { PlayerStatus } from "@/components/PlayerStatus";
+import { SpotifyConnectButton } from "@/components/SpotifyConnectButton";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -298,27 +298,57 @@ export const App = () => {
           onResetLayout={handleResetLayout}
           onToggleTheme={handleToggleTheme}
         />
-        <Empty className="bg-muted/50 p-20 rounded-xl border w-auto max-w-2xl mx-auto">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <HugeiconsIcon
-                icon={Playlist01Icon}
-                strokeWidth={1.5}
-                className="size-12"
-              />
-            </EmptyMedia>
-            <EmptyTitle>Welcome to Trackboard</EmptyTitle>
-            <EmptyDescription>
-              Create a group to organize your tracks into sets, playlists, or
-              categories.
-            </EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <Button size="lg" onClick={handleCreateGroup}>
-              Create your first group
-            </Button>
-          </EmptyContent>
-        </Empty>
+        <div className="flex flex-col space-y-6 py-4">
+          {/* Page Header */}
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleCreateGroup}>
+                <HugeiconsIcon icon={Add01Icon} />
+                <span>Create Group</span>
+              </Button>
+            </div>
+            <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+              <PlayerStatus />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={togglePlayPause}
+                disabled={!isReady || !selectedTrackId}
+              >
+                <HugeiconsIcon
+                  icon={isPlaying ? PauseIcon : PlayIcon}
+                  className="mr-1.5"
+                />
+                <span>{isPlaying ? "Pause" : "Play"}</span>
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <SpotifyConnectButton size="sm" />
+            </div>
+          </div>
+          <Empty className="bg-muted/50 p-20 rounded-xl border w-auto max-w-2xl mx-auto">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <HugeiconsIcon
+                  icon={Playlist01Icon}
+                  strokeWidth={1.5}
+                  className="size-12"
+                />
+              </EmptyMedia>
+              <EmptyTitle>Welcome to Trackboard</EmptyTitle>
+              <EmptyDescription>
+                Create a group to organize your tracks into sets, playlists, or
+                categories.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button variant="outline" size="sm" onClick={handleCreateGroup}>
+                <HugeiconsIcon icon={Add01Icon} className="mr-1.5" />
+                <span>Create your first group</span>
+              </Button>
+            </EmptyContent>
+          </Empty>
+        </div>
       </>
     );
   }
@@ -334,40 +364,30 @@ export const App = () => {
       />
       <div className="flex flex-col space-y-6 py-4">
         {/* Page Header */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Trackboard</h1>
-              <p className="text-sm text-muted-foreground">
-                {groups.length} group{groups.length !== 1 ? "s" : ""}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <PlayerStatus />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={togglePlayPause}
-                disabled={!isReady || !selectedTrackId}
-              >
-                <HugeiconsIcon
-                  icon={isPlaying ? PauseIcon : PlayIcon}
-                  className="mr-1.5"
-                />
-                <span>{isPlaying ? "Pause" : "Play"}</span>
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleResetLayout}>
-                <HugeiconsIcon
-                  icon={ArrowReloadHorizontalIcon}
-                  className="mr-1.5"
-                />
-                <span>Reset layout</span>
-              </Button>
-              <Button onClick={handleCreateGroup}>
-                <HugeiconsIcon icon={Add01Icon} />
-                <span>Create Group</span>
-              </Button>
-            </div>
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleCreateGroup}>
+              <HugeiconsIcon icon={Add01Icon} />
+              <span>Create Group</span>
+            </Button>
+          </div>
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+            <PlayerStatus />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={togglePlayPause}
+              disabled={!isReady || !selectedTrackId}
+            >
+              <HugeiconsIcon
+                icon={isPlaying ? PauseIcon : PlayIcon}
+                className="mr-1.5"
+              />
+              <span>{isPlaying ? "Pause" : "Play"}</span>
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <SpotifyConnectButton size="sm" />
           </div>
         </div>
 

@@ -109,9 +109,7 @@ export const PlayerStatus = ({ className }: PlayerStatusProps) => {
         title="Audio plays through your system's default output device. Set AirPods as default in System Settings > Sound > Output"
       >
         <span className="h-2 w-2 rounded-full bg-green-500" />
-        <span className="text-green-700 dark:text-green-400">
-          ✓ Player ready
-        </span>
+        <span className="text-green-700 dark:text-green-400">Player ready</span>
       </div>
     );
   }

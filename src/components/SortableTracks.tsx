@@ -16,6 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  Add01Icon,
   PaintBoardIcon,
   PencilEdit02Icon,
   PlayIcon,
@@ -25,6 +26,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { EditTrackDialog } from "@/components/EditTrackDialog";
+import { Button } from "@/components/ui/button";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -369,6 +371,7 @@ type SortableTracksProps = {
   onUpdateColor?: (trackId: string, color: TrackColor) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
+  onAddTrack?: () => void;
 };
 
 export const SortableTracks = ({
@@ -380,6 +383,7 @@ export const SortableTracks = ({
   onUpdateColor,
   onDragStart,
   onDragEnd,
+  onAddTrack,
 }: SortableTracksProps) => {
   // Configure sensors to prevent conflicts with react-grid-layout
   const sensors = useSensors(
@@ -411,8 +415,14 @@ export const SortableTracks = ({
 
   if (tracks.length === 0) {
     return (
-      <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
-        No tracks yet
+      <div className="flex flex-col items-center justify-center py-4 gap-2">
+        <div className="text-sm text-muted-foreground">No tracks yet</div>
+        {onAddTrack && (
+          <Button variant="outline" size="sm" onClick={onAddTrack}>
+            <HugeiconsIcon icon={Add01Icon} className="mr-1.5" />
+            <span>Add</span>
+          </Button>
+        )}
       </div>
     );
   }
