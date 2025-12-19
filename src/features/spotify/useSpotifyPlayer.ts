@@ -5,6 +5,7 @@ import { doc, setDoc } from "firebase/firestore";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { db } from "@/lib/firebase";
 
+import { spotifyService } from "./spotifyService";
 import { useSpotifyStatus, useSpotifyToken } from "./useSpotifyAuth";
 
 import type { PlayerState } from "./types";
@@ -275,9 +276,6 @@ export const useSpotifyPlayerInternal = () => {
       }
 
       try {
-        // Use proxy endpoint instead of direct API call
-        const { spotifyService } = await import("./spotifyService");
-
         // First, transfer playback to this device (required for Web Playback SDK)
         // This ensures the web player is the active device before playing
         try {
