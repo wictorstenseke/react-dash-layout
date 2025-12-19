@@ -186,7 +186,7 @@ export const PlaybackProvider = ({ children }: PlaybackProviderProps) => {
         }
       }
     },
-    [play, seek, deviceId, user?.uid, currentGroupId]
+    [play, seek, deviceId, user, currentGroupId]
   );
 
   const pause = useCallback(async () => {
