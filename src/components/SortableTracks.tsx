@@ -16,6 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  Add01Icon,
   PaintBoardIcon,
   PencilEdit02Icon,
   PlayIcon,
@@ -25,6 +26,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { EditTrackDialog } from "@/components/EditTrackDialog";
+import { Button } from "@/components/ui/button";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -43,28 +45,22 @@ import { cn } from "@/lib/utils";
 import type { GroupColor, Track, TrackColor } from "@/features/groups/types";
 
 const colorClasses: Record<TrackColor, string> = {
+  "gray-light": "bg-gray-400",
+  gray: "bg-gray-500",
+  "gray-dark": "bg-gray-600",
   blue: "bg-blue-500",
   green: "bg-green-500",
   yellow: "bg-yellow-500",
   red: "bg-red-500",
   purple: "bg-purple-500",
-  pink: "bg-pink-500",
-  indigo: "bg-indigo-500",
-  orange: "bg-orange-500",
   teal: "bg-teal-500",
-  cyan: "bg-cyan-500",
 };
 
 /**
- * Maps GroupColor to TrackColor (most colors match, use blue as fallback)
+ * Groups and tracks now use the same colors, so no mapping needed
  */
 const mapGroupColorToTrackColor = (groupColor: GroupColor): TrackColor => {
-  // Most group colors match track colors directly
-  if (TRACK_COLORS.includes(groupColor as TrackColor)) {
-    return groupColor as TrackColor;
-  }
-  // Fallback to blue if somehow there's a mismatch
-  return "blue";
+  return groupColor as TrackColor;
 };
 
 /**
@@ -369,6 +365,7 @@ type SortableTracksProps = {
   onUpdateColor?: (trackId: string, color: TrackColor) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
+  onAddTrack?: () => void;
 };
 
 export const SortableTracks = ({
@@ -380,6 +377,7 @@ export const SortableTracks = ({
   onUpdateColor,
   onDragStart,
   onDragEnd,
+  onAddTrack,
 }: SortableTracksProps) => {
   // Configure sensors to prevent conflicts with react-grid-layout
   const sensors = useSensors(
@@ -411,8 +409,14 @@ export const SortableTracks = ({
 
   if (tracks.length === 0) {
     return (
-      <div className="flex items-center justify-center py-4 text-sm text-muted-foreground">
-        No tracks yet
+      <div className="flex flex-col items-center justify-center py-4 gap-2">
+        <div className="text-sm text-muted-foreground">No tracks yet</div>
+        {onAddTrack && (
+          <Button variant="outline" size="sm" onClick={onAddTrack}>
+            <HugeiconsIcon icon={Add01Icon} className="mr-1.5" />
+            <span>Add track</span>
+          </Button>
+        )}
       </div>
     );
   }
@@ -429,7 +433,7 @@ export const SortableTracks = ({
         items={tracks.map((t) => t.id)}
         strategy={rectSortingStrategy}
       >
-        <div className="flex flex-wrap gap-2 justify-center">
+        <div className="flex flex-wrap gap-2 justify-center pt-1">
           {tracks.map((track, index) => (
             <SortableTrack
               key={`${groupId}-${track.id}-${index}`}

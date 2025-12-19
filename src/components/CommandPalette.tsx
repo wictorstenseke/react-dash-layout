@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import {
   Add01Icon,
   ArrowReloadHorizontalIcon,
+  ArrowRight01Icon,
   Logout01Icon,
   Moon02Icon,
   Sun03Icon,
+  User02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
@@ -31,11 +33,12 @@ type CommandPaletteProps = {
   onToggleTheme?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  landingMode?: boolean;
 };
 
 const getInitialIsDark = (): boolean => {
   if (typeof window === "undefined") {
-    return false;
+    return true; // Default to dark
   }
 
   const stored = window.localStorage.getItem("theme");
@@ -43,7 +46,7 @@ const getInitialIsDark = (): boolean => {
   if (stored === "dark") return true;
   if (stored === "light") return false;
 
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  return true; // Default to dark instead of system preference
 };
 
 export const CommandPalette = ({
@@ -52,6 +55,7 @@ export const CommandPalette = ({
   onToggleTheme,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
+  landingMode = false,
 }: CommandPaletteProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
 
@@ -143,6 +147,62 @@ export const CommandPalette = ({
     onToggleTheme?.();
   };
 
+  const handleGetStarted = () => {
+    setOpen(false);
+    navigate({ to: "/app" });
+  };
+
+  const handleSignIn = () => {
+    setOpen(false);
+    navigate({ to: "/login", search: { mode: "login" } });
+  };
+
+  const handleSignUp = () => {
+    setOpen(false);
+    navigate({ to: "/login", search: { mode: "signup" } });
+  };
+
+  // Landing page mode - show only Get Started, Sign In, Sign Up
+  if (landingMode) {
+    return (
+      <CommandDialog open={open} onOpenChange={setOpen}>
+        <Command>
+          <CommandInput placeholder="Type a command or search..." />
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandGroup heading="Actions">
+              <CommandItem onSelect={handleGetStarted}>
+                <HugeiconsIcon
+                  icon={ArrowRight01Icon}
+                  strokeWidth={2}
+                  className="mr-2"
+                />
+                <span>Get Started</span>
+              </CommandItem>
+              <CommandItem onSelect={handleSignIn}>
+                <HugeiconsIcon
+                  icon={User02Icon}
+                  strokeWidth={2}
+                  className="mr-2"
+                />
+                <span>Sign In</span>
+              </CommandItem>
+              <CommandItem onSelect={handleSignUp}>
+                <HugeiconsIcon
+                  icon={Add01Icon}
+                  strokeWidth={2}
+                  className="mr-2"
+                />
+                <span>Sign Up</span>
+              </CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </CommandDialog>
+    );
+  }
+
+  // App mode - show full command palette
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <Command>

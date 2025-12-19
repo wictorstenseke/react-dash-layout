@@ -20,6 +20,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import { useCommandPalette } from "@/contexts/CommandPaletteContext";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { signOutUser } from "@/features/auth/authService";
 import { cn } from "@/lib/utils";
@@ -233,7 +235,7 @@ function getInitials(
 
 const getInitialIsDark = (): boolean => {
   if (typeof window === "undefined") {
-    return false;
+    return true; // Default to dark
   }
 
   const stored = window.localStorage.getItem("theme");
@@ -241,12 +243,22 @@ const getInitialIsDark = (): boolean => {
   if (stored === "dark") return true;
   if (stored === "light") return false;
 
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  return true; // Default to dark instead of system preference
+};
+
+const getModifierKey = (): string => {
+  if (typeof navigator === "undefined") return "Ctrl";
+  const platform = navigator.platform.toUpperCase();
+  const userAgent = navigator.userAgent.toUpperCase();
+  return platform.indexOf("MAC") >= 0 || userAgent.indexOf("MAC") >= 0
+    ? "⌘"
+    : "Ctrl";
 };
 
 export function ProfileMenu({ className }: ProfileMenuProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { setOpen: setCommandPaletteOpen } = useCommandPalette();
   const [signingOut, setSigningOut] = useState(false);
   const [isDark, setIsDark] = useState<boolean>(() => getInitialIsDark());
   const [menuOpen, setMenuOpen] = useState(false);
@@ -396,6 +408,25 @@ export function ProfileMenu({ className }: ProfileMenuProps) {
                 )}
               </div>
             </DropdownMenuLabel>
+          </DropdownMenuGroup>
+
+          <DropdownMenuSeparator />
+
+          {/* Actions Section */}
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              onClick={() => {
+                setMenuOpen(false);
+                setCommandPaletteOpen(true);
+              }}
+              className="text-muted-foreground"
+            >
+              Actions
+              <KbdGroup className="ml-auto">
+                <Kbd>{getModifierKey()}</Kbd>
+                <Kbd>K</Kbd>
+              </KbdGroup>
+            </DropdownMenuItem>
           </DropdownMenuGroup>
 
           <DropdownMenuSeparator />

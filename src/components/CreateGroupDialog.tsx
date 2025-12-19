@@ -17,17 +17,15 @@ import { useCreateGroupMutation, useGroupsQuery } from "@/hooks/useGroups";
 import { cn } from "@/lib/utils";
 
 const colorClasses: Record<GroupColor, { bg: string; ring: string }> = {
-  gray: { bg: "bg-gray-500", ring: "ring-gray-500" },
   "gray-light": { bg: "bg-gray-400", ring: "ring-gray-400" },
+  gray: { bg: "bg-gray-500", ring: "ring-gray-500" },
   "gray-dark": { bg: "bg-gray-600", ring: "ring-gray-600" },
   blue: { bg: "bg-blue-500", ring: "ring-blue-500" },
   green: { bg: "bg-green-500", ring: "ring-green-500" },
-  purple: { bg: "bg-purple-500", ring: "ring-purple-500" },
-  orange: { bg: "bg-orange-500", ring: "ring-orange-500" },
-  pink: { bg: "bg-pink-500", ring: "ring-pink-500" },
-  teal: { bg: "bg-teal-500", ring: "ring-teal-500" },
-  red: { bg: "bg-red-500", ring: "ring-red-500" },
   yellow: { bg: "bg-yellow-500", ring: "ring-yellow-500" },
+  red: { bg: "bg-red-500", ring: "ring-red-500" },
+  purple: { bg: "bg-purple-500", ring: "ring-purple-500" },
+  teal: { bg: "bg-teal-500", ring: "ring-teal-500" },
 };
 
 type CreateGroupDialogProps = {

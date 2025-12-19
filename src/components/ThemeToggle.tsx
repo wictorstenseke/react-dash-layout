@@ -13,7 +13,7 @@ import {
 
 const getInitialIsDark = (): boolean => {
   if (typeof window === "undefined") {
-    return false;
+    return true; // Default to dark
   }
 
   const stored = window.localStorage.getItem("theme");
@@ -21,7 +21,7 @@ const getInitialIsDark = (): boolean => {
   if (stored === "dark") return true;
   if (stored === "light") return false;
 
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  return true; // Default to dark instead of system preference
 };
 
 export function ThemeToggle() {
