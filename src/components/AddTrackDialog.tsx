@@ -17,16 +17,15 @@ import { useCreateTrackMutation, useTracksQuery } from "@/hooks/useTracks";
 import { cn } from "@/lib/utils";
 
 const colorClasses: Record<TrackColor, { bg: string; ring: string }> = {
+  "gray-light": { bg: "bg-gray-400", ring: "ring-gray-400" },
+  gray: { bg: "bg-gray-500", ring: "ring-gray-500" },
+  "gray-dark": { bg: "bg-gray-600", ring: "ring-gray-600" },
   blue: { bg: "bg-blue-500", ring: "ring-blue-500" },
   green: { bg: "bg-green-500", ring: "ring-green-500" },
   yellow: { bg: "bg-yellow-500", ring: "ring-yellow-500" },
   red: { bg: "bg-red-500", ring: "ring-red-500" },
   purple: { bg: "bg-purple-500", ring: "ring-purple-500" },
-  pink: { bg: "bg-pink-500", ring: "ring-pink-500" },
-  indigo: { bg: "bg-indigo-500", ring: "ring-indigo-500" },
-  orange: { bg: "bg-orange-500", ring: "ring-orange-500" },
   teal: { bg: "bg-teal-500", ring: "ring-teal-500" },
-  cyan: { bg: "bg-cyan-500", ring: "ring-cyan-500" },
 };
 
 type AddTrackDialogProps = {
@@ -37,7 +36,7 @@ type AddTrackDialogProps = {
 export const AddTrackDialog = ({ groupId, trigger }: AddTrackDialogProps) => {
   const [open, setOpen] = useState(false);
   const [label, setLabel] = useState("");
-  const [color, setColor] = useState<TrackColor>("blue");
+  const [color, setColor] = useState<TrackColor>("gray");
 
   const { data: tracks } = useTracksQuery(groupId);
   const createTrack = useCreateTrackMutation(groupId);
@@ -57,7 +56,7 @@ export const AddTrackDialog = ({ groupId, trigger }: AddTrackDialogProps) => {
 
     // Reset form and close
     setLabel("");
-    setColor("blue");
+    setColor("gray");
     setOpen(false);
   };
 

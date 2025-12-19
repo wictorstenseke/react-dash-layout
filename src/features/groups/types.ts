@@ -1,21 +1,26 @@
 import type { Timestamp } from "firebase/firestore";
 
-// Available colors for groups and tracks - distinct colors only
-export const GROUP_COLORS = [
+// Available colors for groups and tracks - unified color palette
+export const COLORS = [
   "gray-light",
   "gray",
   "gray-dark",
   "blue",
   "green",
-  "purple",
-  "orange",
-  "pink",
-  "red",
   "yellow",
+  "red",
+  "purple",
   "teal",
 ] as const;
 
-export type GroupColor = (typeof GROUP_COLORS)[number];
+export type Color = (typeof COLORS)[number];
+
+// Groups and tracks use the same colors
+export const GROUP_COLORS = COLORS;
+export const TRACK_COLORS = COLORS;
+
+export type GroupColor = Color;
+export type TrackColor = Color;
 
 export type Group = {
   id: string;
@@ -33,22 +38,6 @@ export type CreateGroupInput = {
 };
 
 export type UpdateGroupInput = Partial<Omit<Group, "id" | "createdAt">>;
-
-// Track types (songs/items within groups)
-export const TRACK_COLORS = [
-  "blue",
-  "green",
-  "yellow",
-  "red",
-  "purple",
-  "pink",
-  "indigo",
-  "orange",
-  "teal",
-  "cyan",
-] as const;
-
-export type TrackColor = (typeof TRACK_COLORS)[number];
 
 export type Track = {
   id: string;

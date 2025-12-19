@@ -1,9 +1,9 @@
 import { useState } from "react";
 
 import {
-  Delete02Icon,
   MoreVerticalIcon,
   PencilEdit02Icon,
+  RemoveSquareIcon,
   SquareArrowDiagonal02Icon,
   Upload03Icon,
   Search01Icon,
@@ -34,13 +34,13 @@ import {
 import type { Group, GroupColor, TrackColor } from "@/features/groups/types";
 
 const groupColorClasses: Record<GroupColor, { bg: string; border: string }> = {
-  gray: {
-    bg: "bg-gray-100 dark:bg-gray-900/30",
-    border: "border-gray-300 dark:border-gray-700",
-  },
   "gray-light": {
     bg: "bg-gray-50 dark:bg-gray-800/30",
     border: "border-gray-200 dark:border-gray-600",
+  },
+  gray: {
+    bg: "bg-gray-100 dark:bg-gray-900/30",
+    border: "border-gray-300 dark:border-gray-700",
   },
   "gray-dark": {
     bg: "bg-gray-200 dark:bg-gray-950/30",
@@ -54,29 +54,21 @@ const groupColorClasses: Record<GroupColor, { bg: string; border: string }> = {
     bg: "bg-green-100 dark:bg-green-900/30",
     border: "border-green-300 dark:border-green-700",
   },
-  purple: {
-    bg: "bg-purple-100 dark:bg-purple-900/30",
-    border: "border-purple-300 dark:border-purple-700",
-  },
-  orange: {
-    bg: "bg-orange-100 dark:bg-orange-900/30",
-    border: "border-orange-300 dark:border-orange-700",
-  },
-  pink: {
-    bg: "bg-pink-100 dark:bg-pink-900/30",
-    border: "border-pink-300 dark:border-pink-700",
-  },
-  teal: {
-    bg: "bg-teal-100 dark:bg-teal-900/30",
-    border: "border-teal-300 dark:border-teal-700",
+  yellow: {
+    bg: "bg-yellow-100 dark:bg-yellow-900/30",
+    border: "border-yellow-300 dark:border-yellow-700",
   },
   red: {
     bg: "bg-red-100 dark:bg-red-900/30",
     border: "border-red-300 dark:border-red-700",
   },
-  yellow: {
-    bg: "bg-yellow-100 dark:bg-yellow-900/30",
-    border: "border-yellow-300 dark:border-yellow-700",
+  purple: {
+    bg: "bg-purple-100 dark:bg-purple-900/30",
+    border: "border-purple-300 dark:border-purple-700",
+  },
+  teal: {
+    bg: "bg-teal-100 dark:bg-teal-900/30",
+    border: "border-teal-300 dark:border-teal-700",
   },
 };
 
@@ -147,6 +139,7 @@ export const GroupCard = ({
       />
       <SearchTrackDialog
         groupId={group.id}
+        groupColor={group.color}
         open={searchDialogOpen}
         onOpenChange={setSearchDialogOpen}
       />
@@ -223,11 +216,11 @@ export const GroupCard = ({
                     className="cursor-pointer"
                   >
                     <HugeiconsIcon
-                      icon={Delete02Icon}
+                      icon={RemoveSquareIcon}
                       strokeWidth={2}
                       className="mr-2"
                     />
-                    <span>Delete group</span>
+                    <span>Remove group</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
