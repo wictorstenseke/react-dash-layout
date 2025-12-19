@@ -6,11 +6,11 @@ import {
 } from "../utils/spotify-api.js";
 
 /**
- * Play a track on Spotify
- * POST /spotify/play
+ * Add a track to Spotify playback queue
+ * POST /spotify/queue
  * Body: { trackId: string, deviceId?: string }
  */
-export const spotifyPlay = onRequest(
+export const spotifyQueue = onRequest(
   { cors: true, region: "europe-west1", secrets: [spotifyClientSecret] },
   async (request, response) => {
     try {
@@ -18,13 +18,12 @@ export const spotifyPlay = onRequest(
       const uid = await verifyAuth(request);
 
       // Get request body
-      const { trackId, trackUris, deviceId } = request.body;
+      const { trackId, deviceId } = request.body;
 
-      // Support both single trackId and multiple trackUris
-      if (!trackId && !trackUris) {
+      if (!trackId) {
         response.status(400).json({
           error: "Bad Request",
-          message: "Missing trackId or trackUris in request body",
+          message: "Missing trackId in request body",
         });
         return;
       }
@@ -44,30 +43,26 @@ export const spotifyPlay = onRequest(
         clientSecret
       );
 
-      // Build play URL with optional device ID
-      const playUrl = deviceId
-        ? `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`
-        : "https://api.spotify.com/v1/me/player/play";
+      // Build queue URL with track URI and optional device ID
+      const trackUri = `spotify:track:${trackId}`;
+      const queueUrl = new URL("https://api.spotify.com/v1/me/player/queue");
+      queueUrl.searchParams.set("uri", trackUri);
+      if (deviceId) {
+        queueUrl.searchParams.set("device_id", deviceId);
+      }
 
-      // Build request body - use trackUris if provided, otherwise single trackId
-      const requestBody = trackUris
-        ? { uris: trackUris }
-        : { uris: [`spotify:track:${trackId}`] };
-
-      // Play track(s) on Spotify
-      const spotifyResponse = await fetch(playUrl, {
-        method: "PUT",
+      // Add track to queue
+      const spotifyResponse = await fetch(queueUrl.toString(), {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify(requestBody),
       });
 
       if (!spotifyResponse.ok) {
         const error = await spotifyResponse.text();
-        console.error("Spotify play error:", error);
-        throw new Error(`Spotify play failed: ${spotifyResponse.status}`);
+        console.error("Spotify queue error:", error);
+        throw new Error(`Spotify queue failed: ${spotifyResponse.status}`);
       }
 
       response.status(204).send();

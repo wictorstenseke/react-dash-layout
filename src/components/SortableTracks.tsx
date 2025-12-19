@@ -178,7 +178,7 @@ const SortableTrack = ({
 
   const handleDoubleClick = () => {
     if (track.spotifyTrackId && isReady && !isDragging) {
-      playTrack(track.spotifyTrackId, track.startTimeMs);
+      playTrack(track.spotifyTrackId, track.startTimeMs, groupId, track.id);
     }
   };
 
@@ -193,7 +193,7 @@ const SortableTrack = ({
 
   const handleContextPlay = () => {
     if (track.spotifyTrackId && isReady) {
-      playTrack(track.spotifyTrackId, track.startTimeMs);
+      playTrack(track.spotifyTrackId, track.startTimeMs, groupId, track.id);
     }
   };
 
