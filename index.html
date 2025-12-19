@@ -6,6 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trackboard</title>
     <script>
+      // Initialize theme before React loads to prevent flash of light theme
+      (function () {
+        const stored = localStorage.getItem("theme");
+        if (stored === "light") {
+          // Only remove dark class if explicitly set to light
+          document.documentElement.classList.remove("dark");
+        } else {
+          // Default to dark theme
+          document.documentElement.classList.add("dark");
+        }
+      })();
+
       // Initialize onSpotifyWebPlaybackSDKReady before SDK loads to prevent errors
       if (typeof window.onSpotifyWebPlaybackSDKReady === "undefined") {
         window.onSpotifyWebPlaybackSDKReady = function () {
