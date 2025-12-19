@@ -13,11 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  TRACK_COLORS,
-  type GroupColor,
-  type TrackColor,
-} from "@/features/groups/types";
+import { type GroupColor, type TrackColor } from "@/features/groups/types";
 import { useSpotifySearchTracksQuery } from "@/features/spotify/useSpotifyData";
 import { useCreateTrackMutation, useTracksQuery } from "@/hooks/useTracks";
 import { cn } from "@/lib/utils";

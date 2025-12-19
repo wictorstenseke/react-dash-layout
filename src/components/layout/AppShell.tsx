@@ -5,27 +5,14 @@ import { Link } from "@tanstack/react-router";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { useCommandPalette } from "@/contexts/CommandPaletteContext";
 import { useAuth } from "@/features/auth/AuthProvider";
 
 interface AppShellProps {
   children: ReactNode;
 }
 
-const getModifierKey = (): string => {
-  if (typeof navigator === "undefined") return "Ctrl";
-  const platform = navigator.platform.toUpperCase();
-  const userAgent = navigator.userAgent.toUpperCase();
-  return platform.indexOf("MAC") >= 0 || userAgent.indexOf("MAC") >= 0
-    ? "⌘"
-    : "Ctrl";
-};
-
 export function AppShell({ children }: AppShellProps) {
   const { isAuthed, loading } = useAuth();
-  const { setOpen } = useCommandPalette();
 
   return (
     <div className="min-h-screen bg-background">
@@ -71,24 +58,8 @@ export function AppShell({ children }: AppShellProps) {
               </Link>
             </nav>
           </div>
-          {/* Right: CommandPalette Input, ProfileMenu, Sign in/up buttons, or ThemeToggle */}
+          {/* Right: ProfileMenu, Sign in/up buttons, or ThemeToggle */}
           <div className="flex items-center justify-end gap-2">
-            {!loading && isAuthed && (
-              <div className="relative flex items-center">
-                <Input
-                  readOnly
-                  placeholder="See actions..."
-                  onClick={() => setOpen(true)}
-                  className="h-8 w-48 cursor-pointer pr-20 hover:bg-muted/50 hover:border-border transition-colors"
-                />
-                <div className="absolute right-2 flex items-center">
-                  <KbdGroup>
-                    <Kbd>{getModifierKey()}</Kbd>
-                    <Kbd>K</Kbd>
-                  </KbdGroup>
-                </div>
-              </div>
-            )}
             {!loading && !isAuthed && (
               <>
                 <Button
