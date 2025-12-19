@@ -174,6 +174,26 @@ export const spotifyService = {
   },
 
   /**
+   * Play multiple tracks on Spotify (replaces queue)
+   */
+  playTracks: async (trackUris: string[], deviceId?: string): Promise<void> => {
+    await fetchWithAuth<void>("/spotifyPlay", {
+      method: "POST",
+      body: JSON.stringify({ trackUris, deviceId }),
+    });
+  },
+
+  /**
+   * Add a track to Spotify playback queue
+   */
+  addToQueue: async (trackId: string, deviceId?: string): Promise<void> => {
+    await fetchWithAuth<void>("/spotifyQueue", {
+      method: "POST",
+      body: JSON.stringify({ trackId, deviceId }),
+    });
+  },
+
+  /**
    * Disconnect Spotify account
    */
   disconnect: async (): Promise<void> => {
