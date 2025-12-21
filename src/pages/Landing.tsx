@@ -12,7 +12,6 @@ import {
   ItemDescription,
   ItemGroup,
   ItemHeader,
-  ItemMedia,
   ItemTitle,
 } from "@/components/ui/item";
 import { RainbowButton } from "@/components/ui/rainbow-button";

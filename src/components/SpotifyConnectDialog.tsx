@@ -1,5 +1,3 @@
-import * as React from "react";
-
 import { SpotifyIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
@@ -97,4 +95,5 @@ export const SpotifyConnectDialog = ({
     </Dialog>
   );
 };
+
 

@@ -9,7 +9,6 @@ import {
   Moon02Icon,
   Sun03Icon,
   UserAdd02Icon,
-  User02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
