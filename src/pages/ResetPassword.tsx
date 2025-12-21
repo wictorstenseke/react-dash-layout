@@ -3,8 +3,14 @@ import { useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { sendPasswordReset } from "@/features/auth/authService";
 
 export const ResetPassword = () => {
@@ -31,76 +37,96 @@ export const ResetPassword = () => {
   };
 
   return (
-    <div className="flex min-h-[60vh] flex-col items-center justify-center">
-      <div className="w-full max-w-sm rounded-lg border bg-card p-12 shadow-sm">
-        <div className="space-y-6">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">Reset Password</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Enter your email to receive a password reset link
-            </p>
-          </div>
-
-          {success ? (
-            <div className="space-y-4">
-              <div className="rounded-md border border-green-500/50 bg-green-500/10 px-3 py-3 text-sm text-green-700 dark:text-green-400">
-                Password reset email sent! Check your inbox for further
-                instructions.
-              </div>
-              <div className="text-center">
-                <Link
-                  to="/login"
-                  className="text-sm font-medium underline-offset-4 hover:underline"
-                >
-                  Back to sign in
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    autoComplete="email"
-                    placeholder="you@example.com"
-                  />
+    <div className="fixed inset-0 bg-muted flex flex-col items-center justify-center p-6 md:p-10 overflow-hidden">
+      <div className="w-full max-w-sm md:max-w-4xl max-h-full overflow-y-auto">
+        <Card className="overflow-hidden p-0">
+          <CardContent className="grid p-0 md:grid-cols-2">
+            <div className="p-6 md:pt-[120px] md:pb-[120px] md:px-10">
+              <FieldGroup>
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <h1 className="text-2xl font-bold">Reset Password</h1>
+                  <p className="text-muted-foreground text-balance">
+                    Enter your email to receive a password reset link
+                  </p>
                 </div>
 
-                {error && (
-                  <div
-                    role="alert"
-                    className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive dark:bg-destructive/20 dark:border-destructive/50"
-                  >
-                    {error}
-                  </div>
+                {success ? (
+                  <>
+                    <Field>
+                      <div className="rounded-md border border-green-500/50 bg-green-500/10 px-3 py-3 text-sm text-green-700 dark:text-green-400">
+                        Password reset email sent! Check your inbox for further
+                        instructions.
+                      </div>
+                    </Field>
+                    <FieldDescription className="text-center">
+                      <Link
+                        to="/login"
+                        className="font-medium underline-offset-2 hover:underline"
+                      >
+                        Back to sign in
+                      </Link>
+                    </FieldDescription>
+                  </>
+                ) : (
+                  <>
+                    <form onSubmit={handleSubmit}>
+                      <FieldGroup>
+                        <Field>
+                          <FieldLabel htmlFor="email">Email</FieldLabel>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            autoComplete="email"
+                            placeholder="you@example.com"
+                          />
+                        </Field>
+
+                        {error && (
+                          <div
+                            role="alert"
+                            className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive dark:bg-destructive/20 dark:border-destructive/50"
+                          >
+                            {error}
+                          </div>
+                        )}
+
+                        <Field>
+                          <Button
+                            type="submit"
+                            className="w-full"
+                            disabled={isSubmitting}
+                          >
+                            {isSubmitting ? "Please wait…" : "Send Reset Link"}
+                          </Button>
+                        </Field>
+
+                        <FieldDescription className="text-center">
+                          <Link
+                            to="/login"
+                            className="font-medium underline-offset-2 hover:underline"
+                          >
+                            Back to sign in
+                          </Link>
+                        </FieldDescription>
+                      </FieldGroup>
+                    </form>
+                  </>
                 )}
+              </FieldGroup>
+            </div>
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Please wait…" : "Send Reset Link"}
-                </Button>
-              </form>
-
-              <div className="text-center text-sm">
-                <Link
-                  to="/login"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Back to sign in
-                </Link>
-              </div>
-            </>
-          )}
-        </div>
+            <div className="bg-muted relative hidden md:block">
+              <img
+                src="/login-image.jpg"
+                alt="Audio mixer and music production setup"
+                className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

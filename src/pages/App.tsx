@@ -16,6 +16,7 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { GroupCard } from "@/components/GroupCard";
 import { PlayerStatus } from "@/components/PlayerStatus";
 import { SpotifyConnectButton } from "@/components/SpotifyConnectButton";
+import { SpotifyConnectDialog } from "@/components/SpotifyConnectDialog";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -29,6 +30,7 @@ import { useCommandPalette } from "@/contexts/CommandPaletteContext";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { usePlayback } from "@/features/playback/PlaybackProvider";
 import { useSpotifyPlayer } from "@/features/spotify/SpotifyPlayerProvider";
+import { useSpotifyStatus } from "@/features/spotify/useSpotifyAuth";
 import {
   useCreateGroupMutation,
   useDeleteGroupMutation,
@@ -72,10 +74,14 @@ export const App = () => {
   const { isReady } = useSpotifyPlayer();
   const { togglePlayPause, isPlaying, selectedTrackId } = usePlayback();
   const { open, setOpen } = useCommandPalette();
+  const { isLinked, loading: spotifyStatusLoading } = useSpotifyStatus();
 
   const { width, containerRef, mounted } = useContainerWidth();
   const [layout, setLayout] = useState<Layout>([]);
   const [isSquareDragging, setIsSquareDragging] = useState(false);
+  const [showSpotifyDialog, setShowSpotifyDialog] = useState(false);
+  const [spotifyError, setSpotifyError] = useState<string | null>(null);
+  const hasCheckedSpotifyRef = useRef(false);
 
   // Keyboard handler for Space key
   useEffect(() => {
@@ -103,6 +109,64 @@ export const App = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [togglePlayPause]);
+
+  // Reset check ref when user changes
+  useEffect(() => {
+    if (user?.uid) {
+      hasCheckedSpotifyRef.current = false;
+    }
+  }, [user?.uid]);
+
+  // Bootstrap: Check Spotify connection status and handle OAuth errors
+  useEffect(() => {
+    // Check for OAuth callback errors in URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const spotifyError = urlParams.get("spotify");
+    const errorMessage = urlParams.get("message");
+
+    if (spotifyError === "error" && errorMessage) {
+      // Parse and format error message for user-friendly display
+      let formattedMessage = errorMessage;
+      if (
+        errorMessage.includes("cancelled") ||
+        errorMessage.includes("denied")
+      ) {
+        formattedMessage = "Connection cancelled. Please try again.";
+      } else if (
+        errorMessage.includes("expired") ||
+        errorMessage.includes("refresh")
+      ) {
+        formattedMessage =
+          "Your Spotify connection needs to be renewed. Please reconnect.";
+      }
+      setSpotifyError(formattedMessage);
+      setShowSpotifyDialog(true);
+      hasCheckedSpotifyRef.current = true;
+
+      // Clean up URL params
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete("spotify");
+      newUrl.searchParams.delete("message");
+      window.history.replaceState({}, "", newUrl.toString());
+      return;
+    }
+
+    // Wait for auth and Spotify status to be ready
+    if (
+      !authLoading &&
+      isAuthed &&
+      user?.uid &&
+      !spotifyStatusLoading &&
+      !hasCheckedSpotifyRef.current
+    ) {
+      hasCheckedSpotifyRef.current = true;
+
+      // Show dialog if Spotify is not linked
+      if (!isLinked) {
+        setShowSpotifyDialog(true);
+      }
+    }
+  }, [authLoading, isAuthed, user?.uid, spotifyStatusLoading, isLinked]);
 
   // Track previous group IDs to detect actual changes
   const prevGroupIdsRef = useRef<string>("");
@@ -198,6 +262,14 @@ export const App = () => {
       saveLayout(user.uid, layout);
     }
   }, [layout, user?.uid]);
+
+  // Close dialog when Spotify becomes linked
+  useEffect(() => {
+    if (isLinked && showSpotifyDialog) {
+      setShowSpotifyDialog(false);
+      setSpotifyError(null);
+    }
+  }, [isLinked, showSpotifyDialog]);
 
   // Early return if not authenticated - prevents any effects from running
   // This is a safety check in case RequireAuth hasn't redirected yet
@@ -298,6 +370,11 @@ export const App = () => {
           onResetLayout={handleResetLayout}
           onToggleTheme={handleToggleTheme}
         />
+        <SpotifyConnectDialog
+          open={showSpotifyDialog}
+          onOpenChange={setShowSpotifyDialog}
+          errorMessage={spotifyError}
+        />
         <div className="flex flex-col space-y-6 py-4">
           {/* Page Header */}
           <div className="relative flex items-center justify-between">
@@ -361,6 +438,11 @@ export const App = () => {
         onCreateGroup={handleCreateGroup}
         onResetLayout={handleResetLayout}
         onToggleTheme={handleToggleTheme}
+      />
+      <SpotifyConnectDialog
+        open={showSpotifyDialog}
+        onOpenChange={setShowSpotifyDialog}
+        errorMessage={spotifyError}
       />
       <div className="flex flex-col space-y-6 py-4">
         {/* Page Header */}

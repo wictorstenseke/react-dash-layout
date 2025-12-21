@@ -3,10 +3,12 @@ import { useEffect, useState } from "react";
 import {
   Add01Icon,
   ArrowReloadHorizontalIcon,
-  ArrowRight01Icon,
+  GithubIcon,
+  LoginSquare01Icon,
   Logout01Icon,
   Moon02Icon,
   Sun03Icon,
+  UserAdd02Icon,
   User02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -147,11 +149,6 @@ export const CommandPalette = ({
     onToggleTheme?.();
   };
 
-  const handleGetStarted = () => {
-    setOpen(false);
-    navigate({ to: "/app" });
-  };
-
   const handleSignIn = () => {
     setOpen(false);
     navigate({ to: "/login", search: { mode: "login" } });
@@ -162,7 +159,16 @@ export const CommandPalette = ({
     navigate({ to: "/login", search: { mode: "signup" } });
   };
 
-  // Landing page mode - show only Get Started, Sign In, Sign Up
+  const handleViewGitHub = () => {
+    setOpen(false);
+    window.open(
+      "https://github.com/wictorstenseke/react-dash-layout",
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
+  // Landing page mode - show only Sign In, Sign Up, View on GitHub
   if (landingMode) {
     return (
       <CommandDialog open={open} onOpenChange={setOpen}>
@@ -171,17 +177,9 @@ export const CommandPalette = ({
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup heading="Actions">
-              <CommandItem onSelect={handleGetStarted}>
-                <HugeiconsIcon
-                  icon={ArrowRight01Icon}
-                  strokeWidth={2}
-                  className="mr-2"
-                />
-                <span>Get Started</span>
-              </CommandItem>
               <CommandItem onSelect={handleSignIn}>
                 <HugeiconsIcon
-                  icon={User02Icon}
+                  icon={LoginSquare01Icon}
                   strokeWidth={2}
                   className="mr-2"
                 />
@@ -189,11 +187,19 @@ export const CommandPalette = ({
               </CommandItem>
               <CommandItem onSelect={handleSignUp}>
                 <HugeiconsIcon
-                  icon={Add01Icon}
+                  icon={UserAdd02Icon}
                   strokeWidth={2}
                   className="mr-2"
                 />
-                <span>Sign Up</span>
+                <span>Create account</span>
+              </CommandItem>
+              <CommandItem onSelect={handleViewGitHub}>
+                <HugeiconsIcon
+                  icon={GithubIcon}
+                  strokeWidth={2}
+                  className="mr-2"
+                />
+                <span>View on GitHub</span>
               </CommandItem>
             </CommandGroup>
           </CommandList>

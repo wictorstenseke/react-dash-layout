@@ -48,14 +48,16 @@ export function AppShell({ children }: AppShellProps) {
               >
                 Home
               </Link>
-              <Link
-                to="/app"
-                className="transition-colors hover:text-foreground/80"
-                activeProps={{ className: "text-foreground" }}
-                inactiveProps={{ className: "text-foreground/60" }}
-              >
-                Trackboard
-              </Link>
+              {!loading && isAuthed && (
+                <Link
+                  to="/app"
+                  className="transition-colors hover:text-foreground/80"
+                  activeProps={{ className: "text-foreground" }}
+                  inactiveProps={{ className: "text-foreground/60" }}
+                >
+                  Trackboard
+                </Link>
+              )}
             </nav>
           </div>
           {/* Right: ProfileMenu, Sign in/up buttons, or ThemeToggle */}
