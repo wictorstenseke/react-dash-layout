@@ -1,8 +1,4 @@
-import {
-  Add01Icon,
-  SquareLock01Icon,
-  SquareUnlock01Icon,
-} from "@hugeicons/core-free-icons";
+import { Add01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { ProfileMenu } from "@/components/ProfileMenu";
@@ -89,21 +85,15 @@ export const AppHeader = ({
                       onModeChange(mode === "edit" ? "match" : "edit")
                     }
                     aria-label={
-                      mode === "edit" ? "Lock edits" : "Unlock edits"
+                      mode === "edit" ? "Disable edits" : "Enable edits"
                     }
                     className={cn(
                       mode === "match" &&
                         "bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:border-blue-700 dark:bg-blue-500 dark:border-blue-500 dark:hover:bg-blue-600 dark:hover:border-blue-600"
                     )}
                   >
-                    <HugeiconsIcon
-                      icon={
-                        mode === "edit" ? SquareUnlock01Icon : SquareLock01Icon
-                      }
-                      className="mr-1.5"
-                    />
                     <span>
-                      {mode === "edit" ? "Lock edits" : "Unlock edits"}
+                      {mode === "edit" ? "Disable edits" : "Enable edits"}
                     </span>
                   </Button>
                 }
