@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -13,11 +13,14 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const { isAuthed, loading } = useAuth();
+  const location = useLocation();
+  const isAppRoute = location.pathname === "/app";
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+      {/* Header - Hide on /app route since App page has its own header */}
+      {!isAppRoute && (
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="container mx-auto flex h-14 max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Left: Logo + Nav */}
           <div className="flex">
@@ -48,14 +51,16 @@ export function AppShell({ children }: AppShellProps) {
               >
                 Home
               </Link>
-              <Link
-                to="/app"
-                className="transition-colors hover:text-foreground/80"
-                activeProps={{ className: "text-foreground" }}
-                inactiveProps={{ className: "text-foreground/60" }}
-              >
-                Trackboard
-              </Link>
+              {!loading && isAuthed && (
+                <Link
+                  to="/app"
+                  className="transition-colors hover:text-foreground/80"
+                  activeProps={{ className: "text-foreground" }}
+                  inactiveProps={{ className: "text-foreground/60" }}
+                >
+                  Trackboard
+                </Link>
+              )}
             </nav>
           </div>
           {/* Right: ProfileMenu, Sign in/up buttons, or ThemeToggle */}
@@ -83,12 +88,17 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         </div>
       </header>
+      )}
 
       {/* Main Content */}
-      <main className="flex-1">
-        <div className="container mx-auto max-w-screen-2xl px-4 py-6 sm:px-6 lg:px-8">
-          {children}
-        </div>
+      <main className="flex-1 pb-20">
+        {isAppRoute ? (
+          children
+        ) : (
+          <div className="container mx-auto max-w-screen-2xl px-4 py-6 sm:px-6 lg:px-8">
+            {children}
+          </div>
+        )}
       </main>
     </div>
   );

@@ -3,11 +3,13 @@ import { useEffect, useState } from "react";
 import {
   Add01Icon,
   ArrowReloadHorizontalIcon,
-  ArrowRight01Icon,
+  GithubIcon,
+  LoginSquare01Icon,
   Logout01Icon,
   Moon02Icon,
+  SquareLock01Icon,
   Sun03Icon,
-  User02Icon,
+  UserAdd02Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
@@ -31,6 +33,7 @@ type CommandPaletteProps = {
   onCreateGroup?: () => void;
   onResetLayout?: () => void;
   onToggleTheme?: () => void;
+  onToggleMode?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   landingMode?: boolean;
@@ -53,6 +56,7 @@ export const CommandPalette = ({
   onCreateGroup,
   onResetLayout,
   onToggleTheme,
+  onToggleMode,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
   landingMode = false,
@@ -124,6 +128,19 @@ export const CommandPalette = ({
     return () => document.removeEventListener("keydown", down);
   }, [onToggleTheme]);
 
+  // Handle cmd+l shortcut to toggle mode
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "l" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        onToggleMode?.();
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [onToggleMode]);
+
   const handleSignOut = async () => {
     setOpen(false);
     const result = await signOutUser();
@@ -147,9 +164,9 @@ export const CommandPalette = ({
     onToggleTheme?.();
   };
 
-  const handleGetStarted = () => {
+  const handleToggleMode = () => {
     setOpen(false);
-    navigate({ to: "/app" });
+    onToggleMode?.();
   };
 
   const handleSignIn = () => {
@@ -162,7 +179,16 @@ export const CommandPalette = ({
     navigate({ to: "/login", search: { mode: "signup" } });
   };
 
-  // Landing page mode - show only Get Started, Sign In, Sign Up
+  const handleViewGitHub = () => {
+    setOpen(false);
+    window.open(
+      "https://github.com/wictorstenseke/react-dash-layout",
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
+  // Landing page mode - show only Sign In, Sign Up, View on GitHub
   if (landingMode) {
     return (
       <CommandDialog open={open} onOpenChange={setOpen}>
@@ -171,17 +197,9 @@ export const CommandPalette = ({
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup heading="Actions">
-              <CommandItem onSelect={handleGetStarted}>
-                <HugeiconsIcon
-                  icon={ArrowRight01Icon}
-                  strokeWidth={2}
-                  className="mr-2"
-                />
-                <span>Get Started</span>
-              </CommandItem>
               <CommandItem onSelect={handleSignIn}>
                 <HugeiconsIcon
-                  icon={User02Icon}
+                  icon={LoginSquare01Icon}
                   strokeWidth={2}
                   className="mr-2"
                 />
@@ -189,11 +207,19 @@ export const CommandPalette = ({
               </CommandItem>
               <CommandItem onSelect={handleSignUp}>
                 <HugeiconsIcon
-                  icon={Add01Icon}
+                  icon={UserAdd02Icon}
                   strokeWidth={2}
                   className="mr-2"
                 />
-                <span>Sign Up</span>
+                <span>Create account</span>
+              </CommandItem>
+              <CommandItem onSelect={handleViewGitHub}>
+                <HugeiconsIcon
+                  icon={GithubIcon}
+                  strokeWidth={2}
+                  className="mr-2"
+                />
+                <span>View on GitHub</span>
               </CommandItem>
             </CommandGroup>
           </CommandList>
@@ -227,6 +253,17 @@ export const CommandPalette = ({
               />
               <span>Reset Layout</span>
             </CommandItem>
+            {onToggleMode && (
+              <CommandItem onSelect={handleToggleMode}>
+                <HugeiconsIcon
+                  icon={SquareLock01Icon}
+                  strokeWidth={2}
+                  className="mr-2"
+                />
+                <span>Lock/Unlock edits</span>
+                <CommandShortcut>⌘L</CommandShortcut>
+              </CommandItem>
+            )}
           </CommandGroup>
           <CommandSeparator />
           <CommandGroup heading="Appearance">

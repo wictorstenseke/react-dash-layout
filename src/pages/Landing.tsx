@@ -5,6 +5,15 @@ import Features from "@/components/features-4";
 import FooterSection from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { DotPattern } from "@/components/ui/dot-pattern";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemHeader,
+  ItemTitle,
+} from "@/components/ui/item";
 import { RainbowButton } from "@/components/ui/rainbow-button";
 import { useCommandPalette } from "@/contexts/CommandPaletteContext";
 
@@ -29,21 +38,17 @@ export function Landing() {
             </p>
             <div className="flex flex-col gap-4 sm:flex-row">
               <RainbowButton size="lg" asChild>
-                <Link to="/app">Get Started</Link>
+                <Link to="/login" search={{ mode: "login" }}>
+                  Sign in
+                </Link>
               </RainbowButton>
               <Button
                 size="lg"
                 variant="outline"
-                render={
-                  <a
-                    href="https://github.com/wictorstenseke/react-dash-layout"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  />
-                }
+                render={<Link to="/login" search={{ mode: "signup" }} />}
                 nativeButton={false}
               >
-                View on GitHub
+                Create account
               </Button>
             </div>
           </div>
@@ -51,6 +56,52 @@ export function Landing() {
 
         {/* Features Section */}
         <Features />
+
+        {/* GitHub Section */}
+        <section className="pt-12 pb-12 md:pt-16 md:pb-16">
+          <div className="mx-auto max-w-4xl px-6">
+            <ItemGroup>
+              <Item variant="outline">
+                <ItemHeader>
+                  <ItemContent>
+                    <ItemTitle>Open Source</ItemTitle>
+                    <ItemDescription>
+                      Trackboard is open source and available on GitHub. Check
+                      out the code, contribute, or report issues.
+                    </ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-2"
+                      render={
+                        <a
+                          href="https://github.com/wictorstenseke/react-dash-layout"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        />
+                      }
+                      nativeButton={false}
+                    >
+                      <img
+                        src="/github-mark.svg"
+                        alt=""
+                        className="h-4 w-4 dark:hidden"
+                      />
+                      <img
+                        src="/github-mark-white.svg"
+                        alt=""
+                        className="hidden h-4 w-4 dark:block"
+                      />
+                      <span>View on GitHub</span>
+                    </Button>
+                  </ItemActions>
+                </ItemHeader>
+              </Item>
+            </ItemGroup>
+          </div>
+        </section>
       </div>
       <FooterSection />
     </>

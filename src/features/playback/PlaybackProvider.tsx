@@ -24,6 +24,8 @@ type PlaybackContextValue = {
   ) => Promise<void>;
   pause: () => Promise<void>;
   togglePlayPause: () => Promise<void>;
+  nextTrack: () => Promise<void>;
+  previousTrack: () => Promise<void>;
 };
 
 const PlaybackContext = createContext<PlaybackContextValue | null>(null);
@@ -45,6 +47,8 @@ export const PlaybackProvider = ({ children }: PlaybackProviderProps) => {
     isPlaying,
     isPaused,
     deviceId,
+    nextTrack: spotifyNextTrack,
+    previousTrack: spotifyPreviousTrack,
   } = useSpotifyPlayer();
 
   // Extract current track ID from Spotify player state
@@ -112,6 +116,8 @@ export const PlaybackProvider = ({ children }: PlaybackProviderProps) => {
               await play(trackId);
 
               // Then add remaining tracks to queue
+              // Use longer delays between queue additions to avoid rate limiting
+              // Spotify recommends spacing out queue operations
               for (const track of remainingTracks) {
                 if (track.spotifyTrackId) {
                   try {
@@ -119,13 +125,21 @@ export const PlaybackProvider = ({ children }: PlaybackProviderProps) => {
                       track.spotifyTrackId,
                       deviceId ?? undefined
                     );
-                    // Small delay between queue additions to avoid rate limiting
-                    await new Promise((resolve) => setTimeout(resolve, 100));
+                    // Increased delay between queue additions (500ms) to avoid rate limiting
+                    // This ensures we stay well under Spotify's rate limits
+                    await new Promise((resolve) => setTimeout(resolve, 500));
                   } catch (err) {
+                    // Log but continue - queue failures are non-critical
+                    const errorMessage =
+                      err instanceof Error ? err.message : String(err);
                     console.warn(
                       `Failed to add track ${track.id} to queue:`,
-                      err
+                      errorMessage
                     );
+                    // If rate limited, wait longer before next attempt
+                    if (errorMessage.includes("429") || errorMessage.includes("rate")) {
+                      await new Promise((resolve) => setTimeout(resolve, 2000));
+                    }
                   }
                 }
               }
@@ -194,27 +208,30 @@ export const PlaybackProvider = ({ children }: PlaybackProviderProps) => {
   }, [spotifyPause]);
 
   const togglePlayPause = useCallback(async () => {
-    // If no track is selected, do nothing
-    if (!selectedTrackId) {
+    // If a track is selected, use it; otherwise use the currently playing track
+    const trackIdToUse = selectedTrackId || currentTrackId;
+
+    // If no track is selected and nothing is playing, do nothing
+    if (!trackIdToUse) {
       return;
     }
 
     // If currently playing
     if (isPlaying) {
-      // Check if the playing track matches selected track
-      if (currentTrackId === selectedTrackId) {
+      // Check if the playing track matches the track we want to control
+      if (currentTrackId === trackIdToUse) {
         // Pause current track
         await spotifyPause();
       } else {
-        // Play selected track (switch tracks)
-        await play(selectedTrackId);
+        // Play the selected/new track (switch tracks)
+        await play(trackIdToUse);
       }
-    } else if (isPaused && currentTrackId === selectedTrackId) {
-      // Resume paused track if it matches selection
+    } else if (isPaused && currentTrackId === trackIdToUse) {
+      // Resume paused track if it matches
       await resume();
     } else {
-      // Start playing selected track
-      await play(selectedTrackId);
+      // Start playing the track
+      await play(trackIdToUse);
     }
   }, [
     selectedTrackId,
@@ -226,6 +243,14 @@ export const PlaybackProvider = ({ children }: PlaybackProviderProps) => {
     resume,
   ]);
 
+  const nextTrack = useCallback(async () => {
+    await spotifyNextTrack();
+  }, [spotifyNextTrack]);
+
+  const previousTrack = useCallback(async () => {
+    await spotifyPreviousTrack();
+  }, [spotifyPreviousTrack]);
+
   const value: PlaybackContextValue = {
     selectedTrackId,
     currentTrackId,
@@ -234,6 +259,8 @@ export const PlaybackProvider = ({ children }: PlaybackProviderProps) => {
     playTrack,
     pause,
     togglePlayPause,
+    nextTrack,
+    previousTrack,
   };
 
   return (

@@ -30,6 +30,7 @@ import {
   useTracksQuery,
   useUpdateTrackMutation,
 } from "@/hooks/useTracks";
+import { cn } from "@/lib/utils";
 
 import type { Group, GroupColor, TrackColor } from "@/features/groups/types";
 
@@ -74,9 +75,10 @@ const groupColorClasses: Record<GroupColor, { bg: string; border: string }> = {
 
 type GroupCardProps = {
   group: Group;
-  onDelete: () => void;
+  onDelete?: () => void;
   onSquareDragStart: () => void;
   onSquareDragEnd: () => void;
+  editMode?: boolean;
 };
 
 export const GroupCard = ({
@@ -84,6 +86,7 @@ export const GroupCard = ({
   onDelete,
   onSquareDragStart,
   onSquareDragEnd,
+  editMode = true,
 }: GroupCardProps) => {
   const { data: tracks = [], isLoading } = useTracksQuery(group.id);
   const reorderTracks = useReorderTracksMutation(group.id);
@@ -131,12 +134,14 @@ export const GroupCard = ({
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
       />
-      <DeleteGroupDialog
-        groupName={group.name}
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={onDelete}
-      />
+      {onDelete && (
+        <DeleteGroupDialog
+          groupName={group.name}
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={onDelete}
+        />
+      )}
       <SearchTrackDialog
         groupId={group.id}
         groupColor={group.color}
@@ -153,14 +158,20 @@ export const GroupCard = ({
       >
         <div className="flex flex-col h-full">
           {/* Header with drag handle */}
-          <div className="mb-0 flex items-center justify-between py-4 drag-handle cursor-move shrink-0">
+          <div
+            className={cn(
+              "mb-0 flex items-center justify-between py-4 shrink-0",
+              editMode && "drag-handle cursor-move"
+            )}
+          >
             <h3 className="text-lg font-semibold">{group.name}</h3>
-            <div
-              className="no-drag"
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <DropdownMenu>
+            {editMode && (
+              <div
+                className="no-drag"
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <DropdownMenu>
                 <DropdownMenuTrigger
                   render={
                     <Button
@@ -224,7 +235,8 @@ export const GroupCard = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Tracks content */}
@@ -239,12 +251,13 @@ export const GroupCard = ({
                   groupId={group.id}
                   tracks={tracks}
                   groupColor={group.color}
-                  onReorder={handleReorder}
-                  onDelete={handleDeleteTrack}
-                  onUpdateColor={handleUpdateTrackColor}
+                  onReorder={editMode ? handleReorder : undefined}
+                  onDelete={editMode ? handleDeleteTrack : undefined}
+                  onUpdateColor={editMode ? handleUpdateTrackColor : undefined}
                   onDragStart={onSquareDragStart}
                   onDragEnd={onSquareDragEnd}
-                  onAddTrack={() => setSearchDialogOpen(true)}
+                  onAddTrack={editMode ? () => setSearchDialogOpen(true) : undefined}
+                  editMode={editMode}
                 />
               )}
             </ScrollArea>
@@ -252,12 +265,14 @@ export const GroupCard = ({
         </div>
 
         {/* Custom resize icon overlay */}
-        <div className="absolute bottom-2 right-2 pointer-events-none">
-          <HugeiconsIcon
-            icon={SquareArrowDiagonal02Icon}
-            className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors"
-          />
-        </div>
+        {editMode && (
+          <div className="absolute bottom-2 right-2 pointer-events-none">
+            <HugeiconsIcon
+              icon={SquareArrowDiagonal02Icon}
+              className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors"
+            />
+          </div>
+        )}
       </div>
     </>
   );

@@ -31,10 +31,10 @@ export const useSpotifyPlayerInternal = () => {
   const playerRef = useRef<any | null>(null); // Spotify.Player
   // Use ref to store token so getToken callback doesn't change when tokenData updates
   const tokenDataRef = useRef(tokenData);
-  // Store target volume for fade in/out (default 0.5)
+  // Store target volume (default 0.5)
   const targetVolumeRef = useRef<number>(0.5);
-  // Track active fade animation to prevent overlapping fades
-  const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Flag to prevent player_state_changed from overriding manual pause/resume operations
+  const isPauseResumeInProgressRef = useRef<boolean>(false);
 
   // Update ref when tokenData changes
   useEffect(() => {
@@ -121,6 +121,13 @@ export const useSpotifyPlayerInternal = () => {
         if (!state) return;
 
         setCurrentTrack(state);
+
+        // Ignore state updates during pause/resume operations to prevent race conditions
+        // The pause/resume functions will manually set the state after completion
+        if (isPauseResumeInProgressRef.current) {
+          return;
+        }
+
         setPlayerState(state.paused ? "paused" : "playing");
       });
 
@@ -196,12 +203,6 @@ export const useSpotifyPlayerInternal = () => {
         window.onSpotifyWebPlaybackSDKReady = undefined;
       }
 
-      // Clear any active fade animation
-      if (fadeIntervalRef.current) {
-        clearInterval(fadeIntervalRef.current);
-        fadeIntervalRef.current = null;
-      }
-
       if (playerRef.current) {
         playerRef.current.disconnect();
         playerRef.current = null;
@@ -213,60 +214,6 @@ export const useSpotifyPlayerInternal = () => {
     };
   }, [isLinked, isPremium, accessToken, user?.uid, getToken]); // Use accessToken string instead of tokenData object
 
-  // Fade volume utility function
-  const fadeVolume = useCallback(
-    async (
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      playerInstance: any, // Spotify.Player type from SDK
-      fromVolume: number,
-      toVolume: number,
-      durationMs: number = 1000
-    ): Promise<void> => {
-      // Clear any existing fade
-      if (fadeIntervalRef.current) {
-        clearInterval(fadeIntervalRef.current);
-        fadeIntervalRef.current = null;
-      }
-
-      return new Promise((resolve) => {
-        const startTime = Date.now();
-        const volumeDiff = toVolume - fromVolume;
-
-        const updateVolume = async () => {
-          const elapsed = Date.now() - startTime;
-          const progress = Math.min(elapsed / durationMs, 1);
-
-          // Use easing function for smoother fade (ease-in-out)
-          const easedProgress =
-            progress < 0.5
-              ? 2 * progress * progress
-              : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-
-          const currentVolume = fromVolume + volumeDiff * easedProgress;
-
-          try {
-            await playerInstance.setVolume(currentVolume);
-          } catch (err) {
-            console.error("Error setting volume during fade:", err);
-          }
-
-          if (progress >= 1) {
-            if (fadeIntervalRef.current) {
-              clearInterval(fadeIntervalRef.current);
-              fadeIntervalRef.current = null;
-            }
-            resolve();
-          }
-        };
-
-        // Update volume every ~16ms (60fps)
-        fadeIntervalRef.current = setInterval(updateVolume, 16);
-        updateVolume(); // Initial call
-      });
-    },
-    []
-  );
-
   // Play track
   const play = useCallback(
     async (spotifyTrackId: string) => {
@@ -274,6 +221,9 @@ export const useSpotifyPlayerInternal = () => {
         setError("Player not ready");
         return;
       }
+
+      // Clear pause/resume flag if it was set, as we're explicitly playing
+      isPauseResumeInProgressRef.current = false;
 
       try {
         // First, transfer playback to this device (required for Web Playback SDK)
@@ -297,95 +247,87 @@ export const useSpotifyPlayerInternal = () => {
           }
         }
 
-        // Get current volume to use as target for fade in
-        let targetVolume = targetVolumeRef.current;
+        // Store current volume for future reference
         try {
           const currentVolume = await player.getVolume();
           if (currentVolume > 0) {
-            targetVolume = currentVolume;
-            targetVolumeRef.current = targetVolume;
+            targetVolumeRef.current = currentVolume;
           }
         } catch (err) {
-          // If getVolume fails, use stored target volume
-          console.warn("Could not get current volume, using stored:", err);
+          // If getVolume fails, that's okay - we'll use stored target volume
+          console.warn("Could not get current volume:", err);
         }
 
-        // Set volume to 0 before playing for fade in
-        try {
-          await player.setVolume(0);
-        } catch (err) {
-          console.warn("Could not set volume to 0:", err);
-        }
-
-        // Then play the track
+        // Play the track
         await spotifyService.playTrack(spotifyTrackId, deviceId);
         setPlayerState("playing");
-
-        // Fade in from 0 to target volume over 1 second
-        await fadeVolume(player, 0, targetVolume, 1000);
       } catch (err) {
         console.error("Play error:", err);
         setError(err instanceof Error ? err.message : "Failed to play track");
       }
     },
-    [deviceId, player, fadeVolume]
+    [deviceId, player]
   );
 
   // Pause
   const pause = useCallback(async () => {
     if (!player) return;
 
+    // Set flag to prevent player_state_changed from overriding our pause state
+    isPauseResumeInProgressRef.current = true;
+
     try {
-      // Get current volume before fading out
-      let currentVolume = targetVolumeRef.current;
+      // Store current volume for future reference
       try {
         const volume = await player.getVolume();
         if (volume > 0) {
-          currentVolume = volume;
-          targetVolumeRef.current = currentVolume; // Store for next fade in
+          targetVolumeRef.current = volume;
         }
       } catch (err) {
         console.warn("Could not get current volume:", err);
       }
 
-      // Fade out from current volume to 0 over 1 second
-      await fadeVolume(player, currentVolume, 0, 1000);
-
-      // Then pause
+      // Pause immediately
       await player.pause();
       setPlayerState("paused");
     } catch (err) {
       console.error("Pause error:", err);
       setError(err instanceof Error ? err.message : "Failed to pause");
+      // Still set state to paused even on error, as pause() was called
+      setPlayerState("paused");
+    } finally {
+      // Clear flag after a short delay to allow state to settle
+      // This prevents immediate state updates from player_state_changed
+      setTimeout(() => {
+        isPauseResumeInProgressRef.current = false;
+      }, 100);
     }
-  }, [player, fadeVolume]);
+  }, [player]);
 
   // Resume
   const resume = useCallback(async () => {
     if (!player) return;
 
+    // Set flag to prevent player_state_changed from overriding our resume state
+    isPauseResumeInProgressRef.current = true;
+
     try {
-      // Get target volume for fade in
-      const targetVolume = targetVolumeRef.current;
-
-      // Set volume to 0 before resuming for fade in
-      try {
-        await player.setVolume(0);
-      } catch (err) {
-        console.warn("Could not set volume to 0:", err);
-      }
-
       // Resume playback
       await player.resume();
       setPlayerState("playing");
-
-      // Fade in from 0 to target volume over 1 second
-      await fadeVolume(player, 0, targetVolume, 1000);
     } catch (err) {
       console.error("Resume error:", err);
       setError(err instanceof Error ? err.message : "Failed to resume");
+      // Still set state to playing even on error, as resume() was called
+      setPlayerState("playing");
+    } finally {
+      // Clear flag after a short delay to allow state to settle
+      // This prevents immediate state updates from player_state_changed
+      setTimeout(() => {
+        isPauseResumeInProgressRef.current = false;
+      }, 100);
     }
-  }, [player, fadeVolume]);
+  }, [player]);
 
   // Toggle play/pause
   const togglePlay = useCallback(async () => {
@@ -414,6 +356,30 @@ export const useSpotifyPlayerInternal = () => {
     [player]
   );
 
+  // Next track
+  const nextTrack = useCallback(async () => {
+    if (!player) return;
+
+    try {
+      await player.nextTrack();
+    } catch (err) {
+      console.error("Next track error:", err);
+      setError(err instanceof Error ? err.message : "Failed to skip to next track");
+    }
+  }, [player]);
+
+  // Previous track
+  const previousTrack = useCallback(async () => {
+    if (!player) return;
+
+    try {
+      await player.previousTrack();
+    } catch (err) {
+      console.error("Previous track error:", err);
+      setError(err instanceof Error ? err.message : "Failed to skip to previous track");
+    }
+  }, [player]);
+
   // Debug logging - only log state changes, not every render
   const prevStateRef = useRef({ playerState, deviceId });
   useEffect(() => {
@@ -437,6 +403,24 @@ export const useSpotifyPlayerInternal = () => {
     }
   }, [playerState, deviceId, player, tokenData]);
 
+  // Calculate skip availability based on disallows and track_window
+  const isReadyState =
+    playerState === "ready" ||
+    playerState === "playing" ||
+    playerState === "paused";
+
+  const canSkipNext =
+    isReadyState &&
+    currentTrack &&
+    !currentTrack.disallows?.skipping_next &&
+    currentTrack.track_window?.next_tracks?.length > 0;
+
+  const canSkipPrev =
+    isReadyState &&
+    currentTrack &&
+    !currentTrack.disallows?.skipping_prev &&
+    currentTrack.track_window?.previous_tracks?.length > 0;
+
   return {
     player,
     deviceId,
@@ -450,10 +434,15 @@ export const useSpotifyPlayerInternal = () => {
     isPlaying: playerState === "playing",
     isPaused: playerState === "paused",
     canPlay: !!deviceId && !!tokenData,
+    canSkipNext,
+    canSkipPrev,
     play,
     pause,
     resume,
     togglePlay,
     seek,
+    nextTrack,
+    previousTrack,
   };
 };
+

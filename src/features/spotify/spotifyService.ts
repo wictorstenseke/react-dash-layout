@@ -24,11 +24,13 @@ const getAuthToken = async (): Promise<string> => {
 };
 
 /**
- * Make authenticated request to Cloud Functions
+ * Make authenticated request to Cloud Functions with retry logic for rate limits
  */
 const fetchWithAuth = async <T>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit,
+  retryCount = 0,
+  maxRetries = 3
 ): Promise<T> => {
   const token = await getAuthToken();
 
@@ -40,6 +42,21 @@ const fetchWithAuth = async <T>(
       ...options?.headers,
     },
   });
+
+  // Handle rate limiting (429) with exponential backoff
+  if (response.status === 429 && retryCount < maxRetries) {
+    const retryAfter = response.headers.get("Retry-After");
+    const delayMs = retryAfter
+      ? parseInt(retryAfter, 10) * 1000
+      : Math.min(1000 * Math.pow(2, retryCount), 10000); // Exponential backoff, max 10s
+
+    console.warn(
+      `Rate limited (429) on ${endpoint}, retrying after ${delayMs}ms (attempt ${retryCount + 1}/${maxRetries})`
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    return fetchWithAuth<T>(endpoint, options, retryCount + 1, maxRetries);
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({

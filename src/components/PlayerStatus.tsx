@@ -41,7 +41,7 @@ export const PlayerStatus = ({ className }: PlayerStatusProps) => {
     return (
       <div
         className={cn(
-          "flex items-center gap-2 rounded-lg border border-yellow-500/50 bg-yellow-500/10 px-3 py-2 text-sm",
+          "flex items-center gap-2 rounded-lg border border-yellow-500/50 bg-yellow-500/10 px-3 py-2 text-sm w-fit",
           className
         )}
       >
@@ -57,7 +57,7 @@ export const PlayerStatus = ({ className }: PlayerStatusProps) => {
     return (
       <div
         className={cn(
-          "flex items-center gap-2 rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm",
+          "flex items-center gap-2 rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm w-fit",
           className
         )}
       >
@@ -73,7 +73,7 @@ export const PlayerStatus = ({ className }: PlayerStatusProps) => {
     return (
       <div
         className={cn(
-          "flex items-center gap-2 rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm",
+          "flex items-center gap-2 rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm w-fit",
           className
         )}
       >
@@ -87,7 +87,7 @@ export const PlayerStatus = ({ className }: PlayerStatusProps) => {
     return (
       <div
         className={cn(
-          "flex items-center gap-2 rounded-lg border border-gray-500/50 bg-gray-500/10 px-3 py-2 text-sm",
+          "flex items-center gap-2 rounded-lg border border-gray-500/50 bg-gray-500/10 px-3 py-2 text-sm w-fit",
           className
         )}
       >
@@ -103,7 +103,7 @@ export const PlayerStatus = ({ className }: PlayerStatusProps) => {
     return (
       <div
         className={cn(
-          "flex items-center gap-2 rounded-lg border border-green-500/50 bg-green-500/10 px-3 py-2 text-sm",
+          "flex items-center gap-2 rounded-lg border border-green-500/50 bg-green-500/10 px-3 py-2 text-sm w-fit",
           className
         )}
         title="Audio plays through your system's default output device. Set AirPods as default in System Settings > Sound > Output"
@@ -121,7 +121,7 @@ export const PlayerStatus = ({ className }: PlayerStatusProps) => {
     return (
       <div
         className={cn(
-          "flex items-center gap-3 rounded-lg border border-blue-500/50 bg-blue-500/10 px-3 py-2",
+          "flex items-center gap-3 rounded-lg border border-blue-500/50 bg-blue-500/10 px-3 py-2 w-fit max-w-xs",
           className
         )}
       >
@@ -129,16 +129,16 @@ export const PlayerStatus = ({ className }: PlayerStatusProps) => {
           <img
             src={track.album.images[0].url}
             alt={track.name}
-            className="h-10 w-10 rounded object-cover"
+            className="h-10 w-10 rounded object-cover flex-shrink-0"
           />
         )}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0">
           <p className="text-sm font-medium truncate">{track.name}</p>
           <p className="text-xs text-muted-foreground truncate">
             {track.artists.map((a: { name: string }) => a.name).join(", ")}
           </p>
         </div>
-        <span className="text-xs text-blue-700 dark:text-blue-400">
+        <span className="text-xs text-blue-700 dark:text-blue-400 flex-shrink-0">
           {isPaused ? "⏸ Paused" : "▶ Playing"}
         </span>
       </div>
