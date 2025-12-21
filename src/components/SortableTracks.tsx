@@ -94,6 +94,7 @@ type SortableTrackProps = {
   groupId: string;
   onDelete?: (trackId: string) => void;
   onUpdateColor?: (trackId: string, color: TrackColor) => void;
+  editMode?: boolean;
 };
 
 const SortableTrack = ({
@@ -102,6 +103,7 @@ const SortableTrack = ({
   groupId,
   onDelete,
   onUpdateColor,
+  editMode = true,
 }: SortableTrackProps) => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const {
@@ -121,15 +123,23 @@ const SortableTrack = ({
     null
   );
   const dragStartedRef = useRef(false);
+  // Track if we're currently in a drag operation to prevent accidental clicks
+  const isDragOperationRef = useRef(false);
 
   // Track when drag actually starts
   useEffect(() => {
     if (isDragging) {
       dragStartedRef.current = true;
+      isDragOperationRef.current = true;
     } else {
-      // Reset when drag ends
+      // Reset when drag ends, but delay clearing isDragOperationRef
+      // to prevent click events from firing after drag
       dragStartedRef.current = false;
       pointerDownRef.current = null;
+      // Clear drag operation flag after a short delay to prevent accidental clicks
+      setTimeout(() => {
+        isDragOperationRef.current = false;
+      }, 100);
     }
   }, [isDragging]);
 
@@ -157,7 +167,13 @@ const SortableTrack = ({
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {
-    if (!pointerDownRef.current || dragStartedRef.current || isDragging) {
+    // Don't process clicks if drag was involved or is in progress
+    if (
+      !pointerDownRef.current ||
+      dragStartedRef.current ||
+      isDragging ||
+      isDragOperationRef.current
+    ) {
       pointerDownRef.current = null;
       return;
     }
@@ -177,7 +193,13 @@ const SortableTrack = ({
   };
 
   const handleDoubleClick = () => {
-    if (track.spotifyTrackId && isReady && !isDragging) {
+    // Prevent double-click play if drag was involved
+    if (
+      track.spotifyTrackId &&
+      isReady &&
+      !isDragging &&
+      !isDragOperationRef.current
+    ) {
       playTrack(track.spotifyTrackId, track.startTimeMs, groupId, track.id);
     }
   };
@@ -212,9 +234,9 @@ const SortableTrack = ({
         <div
           ref={setNodeRef}
           style={style}
-          {...attributes}
-          {...listeners}
-          onPointerDown={handlePointerDownWithDrag}
+          {...(editMode ? attributes : {})}
+          {...(editMode ? listeners : {})}
+          onPointerDown={editMode ? handlePointerDownWithDrag : handlePointerDown}
           onPointerUp={canPlay ? handlePointerUp : undefined}
           onDoubleClick={canPlay ? handleDoubleClick : undefined}
           className={cn(
@@ -366,6 +388,7 @@ type SortableTracksProps = {
   onDragStart?: () => void;
   onDragEnd?: () => void;
   onAddTrack?: () => void;
+  editMode?: boolean;
 };
 
 export const SortableTracks = ({
@@ -378,6 +401,7 @@ export const SortableTracks = ({
   onDragStart,
   onDragEnd,
   onAddTrack,
+  editMode = true,
 }: SortableTracksProps) => {
   // Configure sensors to prevent conflicts with react-grid-layout
   const sensors = useSensors(
@@ -396,6 +420,8 @@ export const SortableTracks = ({
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (!editMode) return;
+
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -421,6 +447,25 @@ export const SortableTracks = ({
     );
   }
 
+  // If not in edit mode, render without drag context
+  if (!editMode) {
+    return (
+      <div className="flex flex-wrap gap-2 justify-center pt-1">
+        {tracks.map((track, index) => (
+          <SortableTrack
+            key={`${groupId}-${track.id}-${index}`}
+            track={track}
+            defaultColor={defaultTrackColor}
+            groupId={groupId}
+            onDelete={onDelete}
+            onUpdateColor={onUpdateColor}
+            editMode={editMode}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <DndContext
       id={groupId}
@@ -442,6 +487,7 @@ export const SortableTracks = ({
               groupId={groupId}
               onDelete={onDelete}
               onUpdateColor={onUpdateColor}
+              editMode={editMode}
             />
           ))}
         </div>

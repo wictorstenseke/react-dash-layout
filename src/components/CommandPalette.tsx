@@ -7,6 +7,7 @@ import {
   LoginSquare01Icon,
   Logout01Icon,
   Moon02Icon,
+  SquareLock01Icon,
   Sun03Icon,
   UserAdd02Icon,
 } from "@hugeicons/core-free-icons";
@@ -32,6 +33,7 @@ type CommandPaletteProps = {
   onCreateGroup?: () => void;
   onResetLayout?: () => void;
   onToggleTheme?: () => void;
+  onToggleMode?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   landingMode?: boolean;
@@ -54,6 +56,7 @@ export const CommandPalette = ({
   onCreateGroup,
   onResetLayout,
   onToggleTheme,
+  onToggleMode,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
   landingMode = false,
@@ -125,6 +128,19 @@ export const CommandPalette = ({
     return () => document.removeEventListener("keydown", down);
   }, [onToggleTheme]);
 
+  // Handle cmd+l shortcut to toggle mode
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "l" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        onToggleMode?.();
+      }
+    };
+
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [onToggleMode]);
+
   const handleSignOut = async () => {
     setOpen(false);
     const result = await signOutUser();
@@ -146,6 +162,11 @@ export const CommandPalette = ({
   const handleToggleTheme = () => {
     setOpen(false);
     onToggleTheme?.();
+  };
+
+  const handleToggleMode = () => {
+    setOpen(false);
+    onToggleMode?.();
   };
 
   const handleSignIn = () => {
@@ -232,6 +253,17 @@ export const CommandPalette = ({
               />
               <span>Reset Layout</span>
             </CommandItem>
+            {onToggleMode && (
+              <CommandItem onSelect={handleToggleMode}>
+                <HugeiconsIcon
+                  icon={SquareLock01Icon}
+                  strokeWidth={2}
+                  className="mr-2"
+                />
+                <span>Lock/Unlock edits</span>
+                <CommandShortcut>⌘L</CommandShortcut>
+              </CommandItem>
+            )}
           </CommandGroup>
           <CommandSeparator />
           <CommandGroup heading="Appearance">
