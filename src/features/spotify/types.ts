@@ -59,8 +59,15 @@ export type SpotifyPlaylistTracksResponse = {
 };
 
 export type SpotifySearchResponse = {
-  tracks: {
+  tracks?: {
     items: SpotifyTrack[];
+    total: number;
+    limit: number;
+    offset: number;
+    next: string | null;
+  };
+  playlists?: {
+    items: SpotifyPlaylist[];
     total: number;
     limit: number;
     offset: number;

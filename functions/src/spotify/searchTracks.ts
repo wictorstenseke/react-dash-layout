@@ -20,9 +20,29 @@ type SpotifyTrack = {
   uri: string;
 };
 
-type SpotifySearchResponse = {
+type SpotifyPlaylist = {
+  id: string;
+  name: string;
+  description: string;
+  images: Array<{ url: string }>;
   tracks: {
+    total: number;
+  };
+  owner: {
+    display_name: string;
+  };
+};
+
+type SpotifySearchResponse = {
+  tracks?: {
     items: SpotifyTrack[];
+    total: number;
+    limit: number;
+    offset: number;
+    next: string | null;
+  };
+  playlists?: {
+    items: SpotifyPlaylist[];
     total: number;
     limit: number;
     offset: number;
@@ -69,12 +89,26 @@ export const spotifySearchTracks = onRequest(
       const limit = Math.min(parseInt(request.query.limit as string) || 20, 50);
       const offset = parseInt(request.query.offset as string) || 0;
 
-      // Search tracks on Spotify
+      // Get type parameter (track, playlist, or track,playlist)
+      const typeParam = (request.query.type as string) || "track,playlist";
+
+      // Search on Spotify
       const encodedQuery = encodeURIComponent(query);
       const data = await spotifyApiRequest<SpotifySearchResponse>(
-        `/search?q=${encodedQuery}&type=track&limit=${limit}&offset=${offset}`,
+        `/search?q=${encodedQuery}&type=${typeParam}&limit=${limit}&offset=${offset}`,
         accessToken
       );
+
+      // Log for debugging
+      console.log("Spotify search response:", {
+        query,
+        typeParam,
+        hasTracks: !!data.tracks,
+        tracksCount: data.tracks?.items?.length ?? 0,
+        hasPlaylists: !!data.playlists,
+        playlistsCount: data.playlists?.items?.length ?? 0,
+        fullResponse: JSON.stringify(data).substring(0, 500),
+      });
 
       response.json(data);
     } catch (error) {

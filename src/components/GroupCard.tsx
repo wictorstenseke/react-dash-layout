@@ -150,6 +150,7 @@ export const GroupCard = ({
       />
       <ImportPlaylistDialog
         groupId={group.id}
+        groupColor={group.color}
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
       />

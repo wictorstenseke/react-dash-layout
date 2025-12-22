@@ -10,8 +10,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Item,
+  ItemContent,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/ui/item";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { type TrackColor } from "@/features/groups/types";
+import { Spinner } from "@/components/ui/spinner";
+import { type GroupColor, type TrackColor } from "@/features/groups/types";
 import {
   useSpotifyPlaylistsQuery,
   useSpotifyPlaylistTracksQuery,
@@ -21,8 +28,16 @@ import { cn } from "@/lib/utils";
 
 import type { SpotifyPlaylist } from "@/features/spotify/types";
 
+/**
+ * Groups and tracks now use the same colors, so no mapping needed
+ */
+const mapGroupColorToTrackColor = (groupColor: GroupColor): TrackColor => {
+  return groupColor as TrackColor;
+};
+
 type ImportPlaylistDialogProps = {
   groupId: string;
+  groupColor: GroupColor;
   trigger?: React.ReactElement;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -30,6 +45,7 @@ type ImportPlaylistDialogProps = {
 
 export const ImportPlaylistDialog = ({
   groupId,
+  groupColor,
   trigger,
   open: controlledOpen,
   onOpenChange,
@@ -49,14 +65,19 @@ export const ImportPlaylistDialog = ({
   const { data: existingTracks } = useTracksQuery(groupId);
   const createTrack = useCreateTrackMutation(groupId);
 
+  // Get default track color from group color
+  const defaultTrackColor = mapGroupColorToTrackColor(groupColor);
+
   const handleImport = async () => {
     if (!tracksData || !selectedPlaylist) return;
 
     setImporting(true);
 
+    // Use setTimeout to ensure React renders the importing state before starting async work
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
     try {
       const baseOrder = existingTracks?.length ?? 0;
-      const defaultColor: TrackColor = "blue";
 
       // Import tracks sequentially to maintain order
       for (let i = 0; i < tracksData.items.length; i++) {
@@ -65,12 +86,12 @@ export const ImportPlaylistDialog = ({
 
         await createTrack.mutateAsync({
           label: track.name,
-          color: defaultColor,
+          color: defaultTrackColor,
           order: baseOrder + i,
           spotifyTrackId: track.id,
           title: track.name,
           artists: track.artists.map((a) => a.name),
-          albumImageUrl: track.album.images?.[0]?.url,
+          albumImageUrl: track.album.images?.[0]?.url ?? null,
           durationMs: track.duration_ms,
           origin: {
             type: "playlist",
@@ -115,16 +136,40 @@ export const ImportPlaylistDialog = ({
       <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg md:max-w-2xl w-full">
         <DialogHeader className="min-w-0">
           <DialogTitle className="truncate">
-            {selectedPlaylist ? selectedPlaylist.name : "Import from Playlist"}
+            {importing
+              ? "Importing Tracks"
+              : selectedPlaylist
+                ? selectedPlaylist.name
+                : "Import from Playlist"}
           </DialogTitle>
           <DialogDescription className="truncate">
-            {selectedPlaylist
-              ? `${tracksData?.items.length ?? 0} tracks in this playlist`
-              : "Select a playlist to import tracks"}
+            {importing
+              ? "Please wait while we import your tracks…"
+              : selectedPlaylist
+                ? `${tracksData?.items.length ?? 0} tracks in this playlist`
+                : "Select a playlist to import tracks"}
           </DialogDescription>
         </DialogHeader>
 
-        {!selectedPlaylist ? (
+        {importing ? (
+          <div className="flex w-full flex-col gap-4 [--radius:1rem]">
+            <Item variant="muted">
+              <ItemMedia>
+                <Spinner />
+              </ItemMedia>
+              <ItemContent>
+                <ItemTitle className="line-clamp-1">
+                  Importing playlist
+                </ItemTitle>
+              </ItemContent>
+              <ItemContent className="flex-none justify-end">
+                <span className="text-sm tabular-nums">
+                  {tracksData?.items.length ?? 0} tracks
+                </span>
+              </ItemContent>
+            </Item>
+          </div>
+        ) : !selectedPlaylist ? (
           <ScrollArea className="h-[400px] pr-4 overflow-x-hidden">
             {loadingPlaylists ? (
               <div className="flex items-center justify-center p-8">
@@ -132,7 +177,9 @@ export const ImportPlaylistDialog = ({
               </div>
             ) : (
               <div className="space-y-2 min-w-0">
-                {playlistsData?.items.map((playlist) => (
+                {playlistsData?.items
+                  .filter((playlist): playlist is SpotifyPlaylist => playlist !== null)
+                  .map((playlist) => (
                   <button
                     key={playlist.id}
                     onClick={() => handlePlaylistSelect(playlist)}
@@ -200,40 +247,42 @@ export const ImportPlaylistDialog = ({
           </ScrollArea>
         )}
 
-        <DialogFooter>
-          {selectedPlaylist ? (
-            <>
+        {!importing && (
+          <DialogFooter>
+            {selectedPlaylist ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleBack}
+                  disabled={importing}
+                >
+                  Back
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleImport}
+                  disabled={importing || !tracksData}
+                  className="truncate min-w-0"
+                >
+                  <span className="truncate">
+                    {importing
+                      ? "Importing…"
+                      : `Import ${tracksData?.items.length ?? 0} Tracks`}
+                  </span>
+                </Button>
+              </>
+            ) : (
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleBack}
-                disabled={importing}
+                onClick={() => setOpen(false)}
               >
-                Back
+                Cancel
               </Button>
-              <Button
-                type="button"
-                onClick={handleImport}
-                disabled={importing || !tracksData}
-                className="truncate min-w-0"
-              >
-                <span className="truncate">
-                  {importing
-                    ? "Importing…"
-                    : `Import ${tracksData?.items.length ?? 0} Tracks`}
-                </span>
-              </Button>
-            </>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </Button>
-          )}
-        </DialogFooter>
+            )}
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
