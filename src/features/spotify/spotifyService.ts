@@ -157,16 +157,18 @@ export const spotifyService = {
   },
 
   /**
-   * Search for tracks
+   * Search for tracks and/or playlists
    */
   searchTracks: async (
     query: string,
     limit = 20,
-    offset = 0
+    offset = 0,
+    type: "track" | "playlist" | "all" = "all"
   ): Promise<SpotifySearchResponse> => {
     const encodedQuery = encodeURIComponent(query);
+    const typeParam = type === "all" ? "track,playlist" : type;
     return fetchWithAuth<SpotifySearchResponse>(
-      `/spotifySearchTracks?q=${encodedQuery}&limit=${limit}&offset=${offset}`
+      `/spotifySearchTracks?q=${encodedQuery}&type=${typeParam}&limit=${limit}&offset=${offset}`
     );
   },
 
