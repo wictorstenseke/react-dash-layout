@@ -174,7 +174,7 @@ export const Login = () => {
 
             <div className="bg-muted relative hidden md:block">
               <img
-                src="/login-image.jpg"
+                src={`${import.meta.env.BASE_URL}login-image.jpg`}
                 alt="Audio mixer and music production setup"
                 className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
               />

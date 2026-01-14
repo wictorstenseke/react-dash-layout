@@ -85,12 +85,12 @@ export function Landing() {
                       nativeButton={false}
                     >
                       <img
-                        src="/github-mark.svg"
+                        src={`${import.meta.env.BASE_URL}github-mark.svg`}
                         alt=""
                         className="h-4 w-4 dark:hidden"
                       />
                       <img
-                        src="/github-mark-white.svg"
+                        src={`${import.meta.env.BASE_URL}github-mark-white.svg`}
                         alt=""
                         className="hidden h-4 w-4 dark:block"
                       />
